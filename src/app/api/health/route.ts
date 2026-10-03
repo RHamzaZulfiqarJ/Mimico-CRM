@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 export function GET() {
   return NextResponse.json(
     {
-      service: "marcable-crm-web",
+      service: "crm-mimico-live",
       status: "ok",
       timestamp: new Date().toISOString(),
     },

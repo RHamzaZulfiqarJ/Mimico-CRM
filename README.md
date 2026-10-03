@@ -1,4 +1,4 @@
-# Marcable CRM Web
+# crm.mimico.live
 
 This directory is the isolated Next.js application for the staged CRM migration.
 The legacy `../client` and `../server` applications remain the source system until
