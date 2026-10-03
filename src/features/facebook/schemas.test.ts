@@ -2,7 +2,9 @@ import { describe, expect, test } from "vitest";
 
 import {
   facebookFieldValue,
+  facebookInboxFiltersSchema,
   facebookIntegrationSchema,
+  facebookLeadConversionSchema,
   facebookWebhookSchema,
 } from "@/features/facebook/schemas";
 
@@ -35,5 +37,28 @@ describe("Facebook integration schemas", () => {
     });
     expect(payload.entry[0].changes[0].value.leadgen_id).toBe("lead-1");
     expect(facebookFieldValue([{ name: "full_name", values: [" Ayesha Khan "] }], "full_name")).toBe("Ayesha Khan");
+  });
+
+  test("validates inbox filters and falls back safely", () => {
+    expect(facebookInboxFiltersSchema.parse({ view: "unknown", page: "bad" })).toEqual({
+      view: "available",
+      page: 1,
+    });
+  });
+
+  test("validates a conversion payload", () => {
+    expect(
+      facebookLeadConversionSchema.parse({
+        clientName: "Ayesha Khan",
+        clientPhone: "03001234567",
+        projectId: "",
+        area: "",
+        city: "Lahore",
+        priority: "HOT",
+        stage: "NEW_CLIENT",
+        description: "Facebook inquiry",
+        followUpAt: "",
+      }),
+    ).toMatchObject({ clientName: "Ayesha Khan", city: "Lahore", priority: "HOT" });
   });
 });

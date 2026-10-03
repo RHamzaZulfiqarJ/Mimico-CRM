@@ -56,6 +56,49 @@ export const facebookGraphLeadSchema = z
   })
   .passthrough();
 
+const optionalText = (max: number) =>
+  z.preprocess(
+    (value) =>
+      value == null || (typeof value === "string" && value.trim() === "")
+        ? undefined
+        : value,
+    z.string().trim().max(max).optional(),
+  );
+
+const optionalUuid = z.preprocess(
+  (value) => (value == null || value === "" ? undefined : value),
+  z.uuid("Select a valid project.").optional(),
+);
+
+export const facebookLeadConversionSchema = z.object({
+  clientName: z.string().trim().min(2, "Client name is required.").max(160),
+  clientPhone: z.string().trim().min(2, "Client phone is required.").max(50),
+  projectId: optionalUuid,
+  area: optionalText(120),
+  city: optionalText(100),
+  priority: z.enum(["VERY_COLD", "COLD", "MODERATE", "HOT", "VERY_HOT"]),
+  stage: z.enum([
+    "NEW_CLIENT",
+    "FOLLOW_UP",
+    "CONTACTED_CLIENT",
+    "CALL_NOT_ATTEND",
+    "VISIT_SCHEDULED",
+    "VISIT_DONE",
+    "CLOSED_WON",
+    "CLOSED_LOST",
+  ]),
+  description: optionalText(2_000),
+  followUpAt: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.iso.datetime({ local: true }).optional(),
+  ),
+});
+
+export const facebookInboxFiltersSchema = z.object({
+  view: z.enum(["available", "converted", "declined", "all"]).catch("available"),
+  page: z.coerce.number().int().min(1).max(10_000).catch(1),
+});
+
 export type FacebookIntegrationFormState = {
   status: "idle" | "error" | "success";
   message?: string;
@@ -63,6 +106,16 @@ export type FacebookIntegrationFormState = {
 };
 
 export const initialFacebookIntegrationFormState: FacebookIntegrationFormState = {
+  status: "idle",
+};
+
+export type FacebookLeadFormState = {
+  status: "idle" | "error" | "success";
+  message?: string;
+  errors?: Record<string, string[]>;
+};
+
+export const initialFacebookLeadFormState: FacebookLeadFormState = {
   status: "idle",
 };
 

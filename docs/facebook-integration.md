@@ -31,4 +31,24 @@ supported version such as `v23.0` when upgrading the Meta app.
 - Apply the latest `supabase/rls.sql` after deployment so integration metadata
   remains management-only through the Supabase Data API.
 
-The employee inbox and conversion workflow are the next integration slice.
+## Staff inbox and conversion
+
+Signed webhook deliveries create one pending claim for every active staff
+member. Staff can open `/leads/facebook`, review their available enquiries, and
+either:
+
+- decline only their own claim, leaving the enquiry available to other staff;
+  or
+- claim and convert the enquiry into a normal CRM lead.
+
+Claiming and conversion run in one database transaction. The inbound row is
+conditionally claimed before the CRM lead is created, so two staff members
+cannot successfully claim the same enquiry. The winning employee becomes the
+CRM lead owner, other pending claims are dismissed, and the converted lead
+retains the provider ID through the inbound record and audit log.
+
+Pending enquiries stop being claimable after 24 hours. The inbox treats elapsed
+records as expired even before a maintenance job persists the `EXPIRED` status.
+
+Token lifecycle automation, live Meta verification, and operational expiry
+cleanup remain later integration work.

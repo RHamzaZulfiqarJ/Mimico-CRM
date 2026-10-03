@@ -508,10 +508,12 @@ on public.facebook_lead_claims for update to authenticated
 using (
   profile_id = private.current_profile_id()
   and private.is_org_member(organization_id)
+  and status = 'pending'
 )
 with check (
   profile_id = private.current_profile_id()
   and private.is_org_member(organization_id)
+  and status = 'rejected'
 );
 
 drop policy if exists audit_logs_select_management on public.audit_logs;

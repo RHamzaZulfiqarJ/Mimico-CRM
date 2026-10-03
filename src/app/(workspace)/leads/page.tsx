@@ -96,7 +96,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:overflow-visible sm:pb-0">
           <Link href="/leads" aria-label="Refresh leads" title="Refresh" className={toolbarButton}><RefreshCw className="size-5" /></Link>
           <button disabled aria-label="Archived leads, coming soon" title="Archived leads are coming soon" className={toolbarButton}><Archive className="size-5" /></button>
-          <button disabled aria-label="Facebook leads, coming soon" title="Facebook leads are coming soon" className={toolbarButton}><span className="text-lg font-semibold">f</span></button>
+          <Link href="/leads/facebook" aria-label="Facebook leads" title="Facebook leads" className={toolbarButton}><span className="text-lg font-semibold">f</span></Link>
           <button disabled aria-label="Change lead view, coming soon" title="Additional views are coming soon" className={toolbarButton}><List className="size-5" /></button>
           <details className="relative shrink-0">
             <summary aria-label="Filter leads" title="Filter leads" className={`${toolbarButton} relative list-none cursor-pointer`}><Filter className="size-5" />{activeFilterCount ? <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-[#ff5c6c] text-[9px] font-semibold text-white">{activeFilterCount}</span> : null}</summary>
