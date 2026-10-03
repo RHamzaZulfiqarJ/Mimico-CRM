@@ -70,5 +70,11 @@ leads as expired, dismisses only their still-pending claims, and writes a
 per-organization audit record. Conditional updates prevent it from expiring a
 lead that another employee is claiming concurrently.
 
-Automatic Page-token renewal and proactive expiry warnings remain later
-integration work, together with live Meta webhook acceptance testing.
+Use the same bearer secret to call `GET /api/jobs/facebook-health` once per day.
+It validates every active Page token, confirms that each token belongs to the
+expected Page ID, and creates a deduplicated warning for managers when a secret
+is missing, rejected, or connected to the wrong Page. Provider tokens and raw
+Graph errors are never stored in notifications or audit metadata.
+
+Automatic Page-token renewal remains later integration work, together with live
+Meta webhook acceptance testing.
