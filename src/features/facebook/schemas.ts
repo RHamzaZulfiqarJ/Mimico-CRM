@@ -56,6 +56,13 @@ export const facebookGraphLeadSchema = z
   })
   .passthrough();
 
+export const facebookPageIdentitySchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+  })
+  .passthrough();
+
 const optionalText = (max: number) =>
   z.preprocess(
     (value) =>
@@ -116,6 +123,15 @@ export type FacebookLeadFormState = {
 };
 
 export const initialFacebookLeadFormState: FacebookLeadFormState = {
+  status: "idle",
+};
+
+export type FacebookConnectionFormState = {
+  status: "idle" | "error" | "success";
+  message?: string;
+};
+
+export const initialFacebookConnectionFormState: FacebookConnectionFormState = {
   status: "idle",
 };
 

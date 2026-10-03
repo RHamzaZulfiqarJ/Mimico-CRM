@@ -6,9 +6,12 @@ import { redirect } from "next/navigation";
 import {
   facebookIntegrationSchema,
   facebookLeadConversionSchema,
+  type FacebookConnectionFormState,
   type FacebookIntegrationFormState,
   type FacebookLeadFormState,
 } from "@/features/facebook/schemas";
+import { fetchFacebookPageIdentity } from "@/features/facebook/graph";
+import { getNamedServerSecret } from "@/features/facebook/security";
 import { leadUidFromId } from "@/features/leads/identifiers";
 import { canManageOrganization, isStaff } from "@/lib/auth/authorization";
 import { getAuthContext } from "@/lib/auth/session";
@@ -87,6 +90,54 @@ export async function saveFacebookIntegrationAction(
     status: "success",
     message: "Facebook page configuration saved. Add the referenced secrets to Vercel before verifying the webhook.",
   };
+}
+
+export async function checkFacebookIntegrationAction(
+  integrationId: string,
+  _state: FacebookConnectionFormState,
+): Promise<FacebookConnectionFormState> {
+  void _state;
+  const auth = await getAuthContext();
+  if (!auth || !canManageOrganization(auth.membership.role)) {
+    return { status: "error", message: "You are not authorized to test integrations." };
+  }
+
+  try {
+    const integration = await getDatabase().facebookIntegration.findFirst({
+      where: {
+        id: integrationId,
+        organizationId: auth.organization.id,
+        isActive: true,
+      },
+      select: { pageId: true, pageAccessTokenSecretName: true },
+    });
+    if (!integration) {
+      return { status: "error", message: "The Facebook integration is unavailable." };
+    }
+    const pageAccessToken = getNamedServerSecret(integration.pageAccessTokenSecretName);
+    if (!pageAccessToken) {
+      return {
+        status: "error",
+        message: `${integration.pageAccessTokenSecretName} is missing from the server environment.`,
+      };
+    }
+    const identity = await fetchFacebookPageIdentity(pageAccessToken);
+    if (identity.id !== integration.pageId) {
+      return {
+        status: "error",
+        message: `Token belongs to Page ${identity.id}, not configured Page ${integration.pageId}.`,
+      };
+    }
+    return {
+      status: "success",
+      message: `Connected to ${identity.name} (${identity.id}).`,
+    };
+  } catch {
+    return {
+      status: "error",
+      message: "Facebook rejected the Page token, or the Graph API could not be reached.",
+    };
+  }
 }
 
 function unauthorizedLeadState(): FacebookLeadFormState {

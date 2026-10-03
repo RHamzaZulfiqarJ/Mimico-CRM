@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 
+import { facebookGraphApiVersion } from "@/features/facebook/graph";
 import {
   facebookFieldValue,
   facebookGraphLeadSchema,
@@ -13,20 +14,16 @@ type FacebookIntegration = {
   pageId: string;
 };
 
-function graphApiVersion() {
-  const configured = process.env.FACEBOOK_GRAPH_API_VERSION?.trim();
-  return configured && /^v\d+\.\d+$/.test(configured) ? configured : "v23.0";
-}
-
 async function fetchFacebookLead(providerLeadId: string, pageAccessToken: string) {
   const url = new URL(
-    `https://graph.facebook.com/${graphApiVersion()}/${encodeURIComponent(providerLeadId)}`,
+    `https://graph.facebook.com/${facebookGraphApiVersion()}/${encodeURIComponent(providerLeadId)}`,
   );
   url.searchParams.set("fields", "id,created_time,field_data");
 
   const response = await fetch(url, {
     cache: "no-store",
     headers: { Authorization: `Bearer ${pageAccessToken}` },
+    signal: AbortSignal.timeout(8_000),
   });
   if (!response.ok) throw new Error(`FACEBOOK_GRAPH_${response.status}`);
   return facebookGraphLeadSchema.parse(await response.json());

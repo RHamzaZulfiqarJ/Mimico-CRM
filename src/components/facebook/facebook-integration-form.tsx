@@ -1,11 +1,15 @@
 "use client";
 
-import { CheckCircle2, Copy, LoaderCircle } from "lucide-react";
+import { CheckCircle2, Copy, LoaderCircle, PlugZap } from "lucide-react";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { saveFacebookIntegrationAction } from "@/features/facebook/actions";
 import {
+  checkFacebookIntegrationAction,
+  saveFacebookIntegrationAction,
+} from "@/features/facebook/actions";
+import {
+  initialFacebookConnectionFormState,
   initialFacebookIntegrationFormState,
 } from "@/features/facebook/schemas";
 
@@ -19,6 +23,17 @@ function SaveButton() {
 export function CopyCallbackButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return <button type="button" onClick={async () => { await navigator.clipboard.writeText(value); setCopied(true); window.setTimeout(() => setCopied(false), 1_500); }} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-sky-200 bg-white px-3 text-xs font-medium text-[#20aee3] hover:bg-sky-50">{copied ? <CheckCircle2 className="size-4" /> : <Copy className="size-4" />}{copied ? "Copied" : "Copy"}</button>;
+}
+
+function CheckConnectionSubmit() {
+  const { pending } = useFormStatus();
+  return <button disabled={pending} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-gray-600 transition hover:border-sky-200 hover:text-[#20aee3] disabled:opacity-60">{pending ? <LoaderCircle className="size-4 animate-spin" /> : <PlugZap className="size-4" />}{pending ? "Checking…" : "Test connection"}</button>;
+}
+
+export function FacebookConnectionCheck({ integrationId }: { integrationId: string }) {
+  const action = checkFacebookIntegrationAction.bind(null, integrationId);
+  const [state, formAction] = useActionState(action, initialFacebookConnectionFormState);
+  return <form action={formAction} className="flex min-w-0 flex-col items-start gap-1"><CheckConnectionSubmit />{state.message ? <p role={state.status === "success" ? "status" : "alert"} className={`max-w-64 text-[11px] leading-4 ${state.status === "success" ? "text-emerald-600" : "text-rose-600"}`}>{state.message}</p> : null}</form>;
 }
 
 export function FacebookIntegrationForm() {

@@ -19,6 +19,10 @@ const taskReminderEnvironmentSchema = z.object({
   TASK_REMINDER_SECRET: z.string().min(32),
 });
 
+const facebookMaintenanceEnvironmentSchema = z.object({
+  FACEBOOK_MAINTENANCE_SECRET: z.string().min(32),
+});
+
 function formatEnvironmentError(error: z.ZodError) {
   return error.issues
     .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
@@ -96,6 +100,20 @@ export function getTaskReminderEnvironment() {
   if (!result.success) {
     throw new Error(
       `Invalid task reminder configuration: ${formatEnvironmentError(result.error)}`,
+    );
+  }
+
+  return result.data;
+}
+
+export function getFacebookMaintenanceEnvironment() {
+  const result = facebookMaintenanceEnvironmentSchema.safeParse({
+    FACEBOOK_MAINTENANCE_SECRET: process.env.FACEBOOK_MAINTENANCE_SECRET,
+  });
+
+  if (!result.success) {
+    throw new Error(
+      `Invalid Facebook maintenance configuration: ${formatEnvironmentError(result.error)}`,
     );
   }
 

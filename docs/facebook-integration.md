@@ -14,6 +14,11 @@ secrets, or page access tokens in PostgreSQL.
 4. Use the value of `FACEBOOK_VERIFY_TOKEN` as Meta's verify token.
 5. Subscribe the page to the `leadgen` field and send a test lead.
 
+After adding the deployment secrets, use **Test connection** beside the
+configured page. The server calls Graph API with the Page token and confirms
+that the returned Page ID matches the saved Page ID. The token is never sent to
+the browser.
+
 `FACEBOOK_GRAPH_API_VERSION` is optional and defaults to `v23.0`. Set it to a
 supported version such as `v23.0` when upgrading the Meta app.
 
@@ -50,5 +55,20 @@ retains the provider ID through the inbound record and audit log.
 Pending enquiries stop being claimable after 24 hours. The inbox treats elapsed
 records as expired even before a maintenance job persists the `EXPIRED` status.
 
-Token lifecycle automation, live Meta verification, and operational expiry
-cleanup remain later integration work.
+## Expiry maintenance
+
+Set `FACEBOOK_MAINTENANCE_SECRET` to a server-only value containing at least 32
+characters. An external scheduler should call
+`GET /api/jobs/facebook-maintenance` once per hour with this header:
+
+```text
+Authorization: Bearer <FACEBOOK_MAINTENANCE_SECRET>
+```
+
+`POST` is supported as well. The idempotent job marks elapsed pending inbound
+leads as expired, dismisses only their still-pending claims, and writes a
+per-organization audit record. Conditional updates prevent it from expiring a
+lead that another employee is claiming concurrently.
+
+Automatic Page-token renewal and proactive expiry warnings remain later
+integration work, together with live Meta webhook acceptance testing.

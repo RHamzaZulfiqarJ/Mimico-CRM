@@ -5,6 +5,7 @@ import {
   facebookInboxFiltersSchema,
   facebookIntegrationSchema,
   facebookLeadConversionSchema,
+  facebookPageIdentitySchema,
   facebookWebhookSchema,
 } from "@/features/facebook/schemas";
 
@@ -60,5 +61,11 @@ describe("Facebook integration schemas", () => {
         followUpAt: "",
       }),
     ).toMatchObject({ clientName: "Ayesha Khan", city: "Lahore", priority: "HOT" });
+  });
+
+  test("accepts a Graph page identity without depending on extra fields", () => {
+    expect(
+      facebookPageIdentitySchema.parse({ id: "123", name: "Mimico", category: "Business" }),
+    ).toMatchObject({ id: "123", name: "Mimico" });
   });
 });
