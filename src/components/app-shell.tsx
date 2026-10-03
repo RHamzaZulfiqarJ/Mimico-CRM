@@ -1,11 +1,11 @@
 "use client";
 
 import { Bell, Clock3, LogOut, Menu, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
 
 import { signOutAction } from "@/app/auth/actions";
-import { BrandWordmark } from "@/components/brand-wordmark";
 import { WorkspaceNavigation } from "@/components/workspace-navigation";
 import type { AuthContext } from "@/lib/auth/session";
 
@@ -64,7 +64,7 @@ export function AppShell({ auth, children }: { auth: AuthContext; children: Reac
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-[min(82vw,240px)] flex-col border-r border-[#eeeff0] bg-white shadow-2xl transition-transform duration-300 ease-out md:sticky md:top-0 md:h-screen md:w-[220px] md:translate-x-0 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#eeeff0] px-4">
           <Link href="/dashboard" onClick={() => setSidebarOpen(false)} className="flex flex-1 justify-center">
-            <BrandWordmark className="text-xl" />
+            <Image src="/images/Logo.png" alt="mimico" width={2172} height={724} className="h-auto w-36 object-contain" priority />
           </Link>
           <button type="button" onClick={() => setSidebarOpen(false)} className="rounded-md p-2 text-slate-500 transition hover:bg-slate-50 hover:text-[#20aee3] md:hidden" aria-label="Close navigation"><X className="size-5" /></button>
         </div>
