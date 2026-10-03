@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f9fa;
+  --foreground: #67757c;
+  --brand: #20aee3;
+  --accent: #ff5c6c;
+  --surface: #ffffff;
+  --border: #e8eef1;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Montserrat", "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Montserrat", "Segoe UI", Arial, Helvetica, sans-serif;
+  margin: 0;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand) 22%, white);
+  color: #334155;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand) 32%, transparent);
+  outline-offset: 2px;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary,
+a {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-enter {
+  animation: page-enter 320ms ease-out both;
+}
+
+.overlay-enter {
+  animation: overlay-enter 180ms ease-out both;
+}
+
+.dialog-enter {
+  animation: dialog-enter 220ms ease-out both;
+}
+
+.surface-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.025);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.surface-card-interactive:hover {
+  border-color: color-mix(in srgb, var(--brand) 22%, var(--border));
+  box-shadow: 0 10px 30px rgb(31 55 73 / 0.075);
+  transform: translateY(-2px);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: white;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: #474747c0;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

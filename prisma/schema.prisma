@@ -1,0 +1,799 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrganizationStatus {
+  ACTIVE    @map("active")
+  SUSPENDED @map("suspended")
+  ARCHIVED  @map("archived")
+
+  @@map("organization_status")
+}
+
+enum MembershipRole {
+  CLIENT      @map("client")
+  EMPLOYEE    @map("employee")
+  MANAGER     @map("manager")
+  SUPER_ADMIN @map("super_admin")
+
+  @@map("membership_role")
+}
+
+enum RecordStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
+
+  @@map("record_status")
+}
+
+enum LeadPriority {
+  VERY_COLD @map("veryCold")
+  COLD      @map("cold")
+  MODERATE  @map("moderate")
+  HOT       @map("hot")
+  VERY_HOT  @map("veryHot")
+
+  @@map("lead_priority")
+}
+
+enum LeadStage {
+  NEW_CLIENT       @map("newClient")
+  FOLLOW_UP        @map("followUp")
+  CONTACTED_CLIENT @map("contactedClient")
+  CALL_NOT_ATTEND  @map("callNotAttend")
+  VISIT_SCHEDULED  @map("visitSchedule")
+  VISIT_DONE       @map("visitDone")
+  CLOSED_WON       @map("closedWon")
+  CLOSED_LOST      @map("closedLost")
+
+  @@map("lead_stage")
+}
+
+enum InventoryStatus {
+  SOLD          @map("sold")
+  UNSOLD        @map("unsold")
+  UNDER_PROCESS @map("underProcess")
+
+  @@map("inventory_status")
+}
+
+enum TaskStatus {
+  TODO        @map("todo")
+  IN_PROGRESS @map("in_progress")
+  COMPLETED   @map("completed")
+  CANCELLED   @map("cancelled")
+
+  @@map("task_status")
+}
+
+enum TaskOutcome {
+  SUCCESSFUL   @map("successful")
+  UNSUCCESSFUL @map("unsuccessful")
+
+  @@map("task_outcome")
+}
+
+enum ApprovalType {
+  REQUEST @map("request")
+  VOUCHER @map("voucher")
+  RECEIPT @map("receipt")
+  REFUND  @map("refund")
+
+  @@map("approval_type")
+}
+
+enum ApprovalStatus {
+  UNDER_PROCESS @map("underProcess")
+  ACCEPTED      @map("accepted")
+  REJECTED      @map("rejected")
+
+  @@map("approval_status")
+}
+
+enum CashDirection {
+  IN  @map("in")
+  OUT @map("out")
+
+  @@map("cash_direction")
+}
+
+enum FacebookLeadStatus {
+  PENDING   @map("pending")
+  ACCEPTED  @map("accepted")
+  EXPIRED   @map("expired")
+  CONVERTED @map("converted")
+
+  @@map("facebook_lead_status")
+}
+
+enum FacebookClaimStatus {
+  PENDING   @map("pending")
+  ACCEPTED  @map("accepted")
+  REJECTED  @map("rejected")
+  DISMISSED @map("dismissed")
+
+  @@map("facebook_claim_status")
+}
+
+model Organization {
+  id         String             @id @default(uuid()) @db.Uuid
+  name       String
+  slug       String             @unique
+  status     OrganizationStatus @default(ACTIVE)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt DateTime?          @map("archived_at") @db.Timestamptz(6)
+
+  memberships              OrganizationMembership[]
+  clients                  Client[]
+  societies                Society[]
+  projects                 Project[]
+  inventories              Inventory[]
+  leads                    Lead[]
+  leadAssignments          LeadAssignment[]
+  followUps                FollowUp[]
+  attachments              Attachment[]
+  tasks                    Task[]
+  calendarEvents           CalendarEvent[]
+  approvals                Approval[]
+  notifications            Notification[]
+  sales                    Sale[]
+  cashbookEntries          CashbookEntry[]
+  vouchers                 Voucher[]
+  refunds                  Refund[]
+  payrollDeductionPolicies PayrollDeductionPolicy[]
+  payrollTranscripts       PayrollTranscript[]
+  facebookIntegrations     FacebookIntegration[]
+  facebookInboundLeads     FacebookInboundLead[]
+  facebookLeadClaims       FacebookLeadClaim[]
+  auditLogs                AuditLog[]
+
+  @@map("organizations")
+}
+
+model Profile {
+  id            String   @id @default(uuid()) @db.Uuid
+  authUserId    String?  @unique @map("auth_user_id") @db.Uuid
+  legacyMongoId String?  @unique @map("legacy_mongo_id")
+  username      String?  @unique
+  firstName     String?  @map("first_name")
+  lastName      String?  @map("last_name")
+  email         String?  @unique
+  phone         String?
+  city          String?
+  cnic          String?
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  memberships             OrganizationMembership[]
+  portalClients           Client[]                 @relation("ClientPortalProfile")
+  createdLeads            Lead[]                   @relation("LeadCreator")
+  leadAssignments         LeadAssignment[]         @relation("LeadAssignee")
+  assignedLeadAssignments LeadAssignment[]         @relation("LeadAssignedBy")
+  createdFollowUps        FollowUp[]               @relation("FollowUpCreator")
+  ownedInventories        Inventory[]              @relation("InventoryOwner")
+  assignedTasks           Task[]                   @relation("TaskAssignee")
+  createdTasks            Task[]                   @relation("TaskCreator")
+  calendarEvents          CalendarEvent[]          @relation("CalendarOwner")
+  requestedApprovals      Approval[]               @relation("ApprovalRequester")
+  decidedApprovals        Approval[]               @relation("ApprovalDecider")
+  notifications           Notification[]           @relation("NotificationRecipient")
+  sales                   Sale[]                   @relation("SaleStaff")
+  cashbookEntries         CashbookEntry[]          @relation("CashbookStaff")
+  allocatedVouchers       Voucher[]                @relation("VoucherAssignee")
+  requestedRefunds        Refund[]                 @relation("RefundRequester")
+  decidedRefunds          Refund[]                 @relation("RefundDecider")
+  payrollTranscripts      PayrollTranscript[]      @relation("PayrollProfile")
+  createdAttachments      Attachment[]             @relation("AttachmentCreator")
+  acceptedFacebookLeads   FacebookInboundLead[]    @relation("FacebookLeadAcceptor")
+  facebookLeadClaims      FacebookLeadClaim[]      @relation("FacebookClaimProfile")
+  auditLogs               AuditLog[]               @relation("AuditActor")
+
+  @@index([phone])
+  @@map("profiles")
+}
+
+model OrganizationMembership {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  profileId      String         @map("profile_id") @db.Uuid
+  role           MembershipRole
+  isActive       Boolean        @default(true) @map("is_active")
+  joinedAt       DateTime       @default(now()) @map("joined_at") @db.Timestamptz(6)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  profile      Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, profileId])
+  @@index([profileId, isActive])
+  @@index([organizationId, role, isActive])
+  @@map("organization_memberships")
+}
+
+model Client {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  portalProfileId String?  @map("portal_profile_id") @db.Uuid
+  legacyMongoId   String?  @unique @map("legacy_mongo_id")
+  uid             String?
+  firstName       String?  @map("first_name")
+  lastName        String?  @map("last_name")
+  displayName     String   @map("display_name")
+  email           String?
+  phone           String
+  city            String?
+  cnic            String?
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  portalProfile Profile?     @relation("ClientPortalProfile", fields: [portalProfileId], references: [id], onDelete: SetNull)
+  leads         Lead[]
+
+  @@unique([organizationId, uid])
+  @@unique([organizationId, portalProfileId])
+  @@index([organizationId, phone])
+  @@index([organizationId, email])
+  @@map("clients")
+}
+
+model Society {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  legacyMongoId  String?      @unique @map("legacy_mongo_id")
+  uid            String?
+  title          String
+  description    String
+  status         RecordStatus @default(ACTIVE)
+  isArchived     Boolean      @default(false) @map("is_archived")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projects     Project[]
+  attachments  Attachment[]
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, status, isArchived])
+  @@map("societies")
+}
+
+model Project {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  societyId      String       @map("society_id") @db.Uuid
+  legacyMongoId  String?      @unique @map("legacy_mongo_id")
+  uid            String?
+  title          String
+  description    String
+  city           String
+  status         RecordStatus @default(ACTIVE)
+  isArchived     Boolean      @default(false) @map("is_archived")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  society         Society         @relation(fields: [societyId], references: [id], onDelete: Restrict)
+  inventories     Inventory[]
+  leads           Lead[]
+  cashbookEntries CashbookEntry[]
+  vouchers        Voucher[]
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, societyId, status, isArchived])
+  @@index([organizationId, city])
+  @@map("projects")
+}
+
+model Inventory {
+  id                   String          @id @default(uuid()) @db.Uuid
+  organizationId       String          @map("organization_id") @db.Uuid
+  projectId            String?         @map("project_id") @db.Uuid
+  ownerProfileId       String?         @map("owner_profile_id") @db.Uuid
+  legacyMongoId        String?         @unique @map("legacy_mongo_id")
+  uid                  String?
+  sellerName           String?         @map("seller_name")
+  sellerPhone          String?         @map("seller_phone")
+  sellerEmail          String?         @map("seller_email")
+  sellerCompanyName    String?         @map("seller_company_name")
+  sellerCity           String?         @map("seller_city")
+  propertyStreetNumber String?         @map("property_street_number")
+  propertyNumber       String?         @map("property_number")
+  price                Decimal?        @db.Decimal(18, 2)
+  remarks              String?
+  status               InventoryStatus @default(UNSOLD)
+  isArchived           Boolean         @default(false) @map("is_archived")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  ownerProfile Profile?     @relation("InventoryOwner", fields: [ownerProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, projectId, status, isArchived])
+  @@index([organizationId, ownerProfileId])
+  @@map("inventories")
+}
+
+model Lead {
+  id                 String       @id @default(uuid()) @db.Uuid
+  organizationId     String       @map("organization_id") @db.Uuid
+  clientId           String?      @map("client_id") @db.Uuid
+  projectId          String?      @map("project_id") @db.Uuid
+  createdByProfileId String?      @map("created_by_profile_id") @db.Uuid
+  legacyMongoId      String?      @unique @map("legacy_mongo_id")
+  uid                String?
+  clientName         String?      @map("client_name")
+  clientPhone        String?      @map("client_phone")
+  area               String?
+  city               String?
+  priority           LeadPriority @default(MODERATE)
+  stage              LeadStage    @default(NEW_CLIENT)
+  source             String?
+  description        String?
+  isArchived         Boolean      @default(false) @map("is_archived")
+  refundRequested    Boolean      @default(false) @map("refund_requested")
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client              Client?               @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  project             Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy           Profile?              @relation("LeadCreator", fields: [createdByProfileId], references: [id], onDelete: SetNull)
+  assignments         LeadAssignment[]
+  followUps           FollowUp[]
+  attachments         Attachment[]
+  sales               Sale[]
+  cashbookEntries     CashbookEntry[]
+  refunds             Refund[]
+  approvals           Approval[]
+  facebookConversions FacebookInboundLead[] @relation("FacebookConvertedLead")
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, stage, priority, isArchived])
+  @@index([organizationId, isArchived, updatedAt(sort: Desc)])
+  @@index([organizationId, clientId])
+  @@index([organizationId, projectId])
+  @@index([organizationId, clientPhone])
+  @@map("leads")
+}
+
+model LeadAssignment {
+  id                  String   @id @default(uuid()) @db.Uuid
+  organizationId      String   @map("organization_id") @db.Uuid
+  leadId              String   @map("lead_id") @db.Uuid
+  profileId           String   @map("profile_id") @db.Uuid
+  assignedByProfileId String?  @map("assigned_by_profile_id") @db.Uuid
+  assignedAt          DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  profile      Profile      @relation("LeadAssignee", fields: [profileId], references: [id], onDelete: Cascade)
+  assignedBy   Profile?     @relation("LeadAssignedBy", fields: [assignedByProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([leadId, profileId])
+  @@index([organizationId, profileId])
+  @@map("lead_assignments")
+}
+
+model FollowUp {
+  id                 String    @id @default(uuid()) @db.Uuid
+  organizationId     String    @map("organization_id") @db.Uuid
+  leadId             String    @map("lead_id") @db.Uuid
+  createdByProfileId String?   @map("created_by_profile_id") @db.Uuid
+  legacyMongoId      String?   @unique @map("legacy_mongo_id")
+  uid                String?
+  stage              LeadStage
+  followUpAt         DateTime? @map("follow_up_at") @db.Timestamptz(6)
+  remarks            String?
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdBy    Profile?     @relation("FollowUpCreator", fields: [createdByProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, leadId, followUpAt])
+  @@map("follow_ups")
+}
+
+model Attachment {
+  id                 String   @id @default(uuid()) @db.Uuid
+  organizationId     String   @map("organization_id") @db.Uuid
+  leadId             String?  @map("lead_id") @db.Uuid
+  societyId          String?  @map("society_id") @db.Uuid
+  createdByProfileId String?  @map("created_by_profile_id") @db.Uuid
+  legacyPath         String?  @map("legacy_path")
+  bucket             String
+  objectPath         String   @map("object_path")
+  originalName       String?  @map("original_name")
+  contentType        String?  @map("content_type")
+  sizeBytes          BigInt?  @map("size_bytes")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  society      Society?     @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  createdBy    Profile?     @relation("AttachmentCreator", fields: [createdByProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([bucket, objectPath])
+  @@index([organizationId, leadId])
+  @@index([organizationId, societyId])
+  @@map("attachments")
+}
+
+model Task {
+  id                  String       @id @default(uuid()) @db.Uuid
+  organizationId      String       @map("organization_id") @db.Uuid
+  assignedToProfileId String       @map("assigned_to_profile_id") @db.Uuid
+  createdByProfileId  String?      @map("created_by_profile_id") @db.Uuid
+  legacyMongoId       String?      @unique @map("legacy_mongo_id")
+  uid                 String?
+  title               String
+  description         String?
+  dueAt               DateTime?    @map("due_at") @db.Timestamptz(6)
+  status              TaskStatus   @default(TODO)
+  outcome             TaskOutcome?
+  outcomeComment      String?      @map("outcome_comment")
+  completedAt         DateTime?    @map("completed_at") @db.Timestamptz(6)
+  legacyPayload       Json?        @map("legacy_payload") @db.JsonB
+  isArchived          Boolean      @default(false) @map("is_archived")
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignedTo   Profile      @relation("TaskAssignee", fields: [assignedToProfileId], references: [id], onDelete: Restrict)
+  createdBy    Profile?     @relation("TaskCreator", fields: [createdByProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, assignedToProfileId, status, isArchived])
+  @@index([organizationId, dueAt])
+  @@map("tasks")
+}
+
+model CalendarEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  ownerProfileId String   @map("owner_profile_id") @db.Uuid
+  legacyMongoId  String?  @unique @map("legacy_mongo_id")
+  uid            String?
+  title          String
+  description    String?
+  startsAt       DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt         DateTime @map("ends_at") @db.Timestamptz(6)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        Profile      @relation("CalendarOwner", fields: [ownerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, ownerProfileId, startsAt])
+  @@map("calendar_events")
+}
+
+model Approval {
+  id                   String         @id @default(uuid()) @db.Uuid
+  organizationId       String         @map("organization_id") @db.Uuid
+  leadId               String?        @map("lead_id") @db.Uuid
+  requestedByProfileId String?        @map("requested_by_profile_id") @db.Uuid
+  decidedByProfileId   String?        @map("decided_by_profile_id") @db.Uuid
+  legacyMongoId        String?        @unique @map("legacy_mongo_id")
+  uid                  String?
+  title                String?
+  description          String
+  dueAt                DateTime?      @map("due_at") @db.Timestamptz(6)
+  type                 ApprovalType
+  status               ApprovalStatus @default(UNDER_PROCESS)
+  payload              Json?          @db.JsonB
+  decidedAt            DateTime?      @map("decided_at") @db.Timestamptz(6)
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead          Lead?          @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  requestedBy   Profile?       @relation("ApprovalRequester", fields: [requestedByProfileId], references: [id], onDelete: SetNull)
+  decidedBy     Profile?       @relation("ApprovalDecider", fields: [decidedByProfileId], references: [id], onDelete: SetNull)
+  notifications Notification[]
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, status, type])
+  @@index([organizationId, requestedByProfileId])
+  @@map("approvals")
+}
+
+model Notification {
+  id                 String    @id @default(uuid()) @db.Uuid
+  organizationId     String    @map("organization_id") @db.Uuid
+  recipientProfileId String    @map("recipient_profile_id") @db.Uuid
+  approvalId         String?   @map("approval_id") @db.Uuid
+  legacyMongoId      String?   @unique @map("legacy_mongo_id")
+  uid                String?
+  type               String
+  title              String?
+  description        String
+  payload            Json?     @db.JsonB
+  readAt             DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipient    Profile      @relation("NotificationRecipient", fields: [recipientProfileId], references: [id], onDelete: Cascade)
+  approval     Approval?    @relation(fields: [approvalId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, recipientProfileId, readAt, createdAt])
+  @@map("notifications")
+}
+
+model Sale {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  leadId          String?  @map("lead_id") @db.Uuid
+  staffProfileId  String?  @map("staff_profile_id") @db.Uuid
+  legacyMongoId   String?  @unique @map("legacy_mongo_id")
+  uid             String?
+  staffName       String?  @map("staff_name")
+  clientName      String?  @map("client_name")
+  paymentType     String?  @map("payment_type")
+  referenceNumber String?  @map("reference_number")
+  netPrice        Decimal? @map("net_price") @db.Decimal(18, 2)
+  receivedAmount  Decimal? @map("received_amount") @db.Decimal(18, 2)
+  profit          Decimal? @db.Decimal(18, 2)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  staffProfile Profile?     @relation("SaleStaff", fields: [staffProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, leadId, createdAt])
+  @@index([organizationId, staffProfileId])
+  @@map("sales")
+}
+
+model CashbookEntry {
+  id              String        @id @default(uuid()) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  leadId          String?       @map("lead_id") @db.Uuid
+  projectId       String?       @map("project_id") @db.Uuid
+  staffProfileId  String?       @map("staff_profile_id") @db.Uuid
+  legacyMongoId   String?       @unique @map("legacy_mongo_id")
+  uid             String?
+  direction       CashDirection
+  branch          String?
+  staffName       String?       @map("staff_name")
+  clientName      String?       @map("client_name")
+  remarks         String?
+  paymentType     String?       @map("payment_type")
+  referenceNumber String?       @map("reference_number")
+  amount          Decimal       @db.Decimal(18, 2)
+  occurredAt      DateTime      @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  staffProfile Profile?     @relation("CashbookStaff", fields: [staffProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, occurredAt, direction])
+  @@index([organizationId, leadId])
+  @@index([organizationId, projectId])
+  @@map("cashbook_entries")
+}
+
+model Voucher {
+  id                   String         @id @default(uuid()) @db.Uuid
+  organizationId       String         @map("organization_id") @db.Uuid
+  allocatedToProfileId String?        @map("allocated_to_profile_id") @db.Uuid
+  projectId            String?        @map("project_id") @db.Uuid
+  legacyMongoId        String?        @unique @map("legacy_mongo_id")
+  uid                  String?
+  issuingDate          DateTime?      @map("issuing_date") @db.Date
+  dueDate              DateTime?      @map("due_date") @db.Date
+  branch               String?
+  clientName           String?        @map("client_name")
+  cnic                 String?
+  phone                String?
+  email                String?
+  type                 String?
+  cheque               String?
+  propertyType         String?        @map("property_type")
+  area                 String?
+  total                Decimal?       @db.Decimal(18, 2)
+  paid                 Decimal?       @db.Decimal(18, 2)
+  remaining            Decimal?       @db.Decimal(18, 2)
+  note                 String?
+  status               ApprovalStatus @default(UNDER_PROCESS)
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  allocatedTo  Profile?     @relation("VoucherAssignee", fields: [allocatedToProfileId], references: [id], onDelete: SetNull)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, status, dueDate])
+  @@index([organizationId, allocatedToProfileId])
+  @@map("vouchers")
+}
+
+model Refund {
+  id                   String         @id @default(uuid()) @db.Uuid
+  organizationId       String         @map("organization_id") @db.Uuid
+  leadId               String?        @map("lead_id") @db.Uuid
+  requestedByProfileId String?        @map("requested_by_profile_id") @db.Uuid
+  decidedByProfileId   String?        @map("decided_by_profile_id") @db.Uuid
+  legacyMongoId        String?        @unique @map("legacy_mongo_id")
+  legacyNotificationId String?        @map("legacy_notification_id")
+  uid                  String?
+  branch               String?
+  amount               Decimal        @db.Decimal(18, 2)
+  clientName           String         @map("client_name")
+  cnic                 String?
+  phone                String
+  reason               String
+  status               ApprovalStatus @default(UNDER_PROCESS)
+  decidedAt            DateTime?      @map("decided_at") @db.Timestamptz(6)
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  requestedBy  Profile?     @relation("RefundRequester", fields: [requestedByProfileId], references: [id], onDelete: SetNull)
+  decidedBy    Profile?     @relation("RefundDecider", fields: [decidedByProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, leadId])
+  @@map("refunds")
+}
+
+model PayrollDeductionPolicy {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  legacyMongoId  String?  @unique @map("legacy_mongo_id")
+  lateArrivals   Int      @map("late_arrivals")
+  halfDays       Int      @map("half_days")
+  daysOff        Int      @map("days_off")
+  effectiveFrom  DateTime @default(now()) @map("effective_from") @db.Date
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, effectiveFrom])
+  @@map("payroll_deduction_policies")
+}
+
+model PayrollTranscript {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  profileId       String?  @map("profile_id") @db.Uuid
+  legacyMongoId   String?  @unique @map("legacy_mongo_id")
+  uid             String?
+  employeeName    String   @map("employee_name")
+  designation     String?
+  phone           String?
+  payPeriodStart  DateTime @map("pay_period_start") @db.Date
+  salaryType      String?  @map("salary_type")
+  totalSalary     Decimal? @map("total_salary") @db.Decimal(18, 2)
+  lateArrivals    Int?     @map("late_arrivals")
+  halfDays        Int?     @map("half_days")
+  daysOff         Int?     @map("days_off")
+  amountPerDayOff Decimal? @map("amount_per_day_off") @db.Decimal(18, 2)
+  netSalary       Decimal? @map("net_salary") @db.Decimal(18, 2)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  profile      Profile?     @relation("PayrollProfile", fields: [profileId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, uid])
+  @@index([organizationId, payPeriodStart])
+  @@index([organizationId, profileId])
+  @@map("payroll_transcripts")
+}
+
+model FacebookIntegration {
+  id                        String   @id @default(uuid()) @db.Uuid
+  organizationId            String   @map("organization_id") @db.Uuid
+  legacyMongoId             String?  @unique @map("legacy_mongo_id")
+  pageId                    String   @map("page_id")
+  appId                     String   @map("app_id")
+  verifyTokenSecretName     String   @map("verify_token_secret_name")
+  appSecretName             String   @map("app_secret_name")
+  pageAccessTokenSecretName String   @map("page_access_token_secret_name")
+  isActive                  Boolean  @default(true) @map("is_active")
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inboundLeads FacebookInboundLead[]
+
+  @@unique([organizationId, pageId])
+  @@map("facebook_integrations")
+}
+
+model FacebookInboundLead {
+  id                  String             @id @default(uuid()) @db.Uuid
+  organizationId      String             @map("organization_id") @db.Uuid
+  integrationId       String             @map("integration_id") @db.Uuid
+  acceptedByProfileId String?            @map("accepted_by_profile_id") @db.Uuid
+  convertedLeadId     String?            @unique @map("converted_lead_id") @db.Uuid
+  legacyMongoId       String?            @unique @map("legacy_mongo_id")
+  providerLeadId      String             @map("provider_lead_id")
+  eventTitle          String             @default("Facebook Lead") @map("event_title")
+  fieldData           Json               @map("field_data") @db.JsonB
+  rawPayload          Json?              @map("raw_payload") @db.JsonB
+  status              FacebookLeadStatus @default(PENDING)
+  providerCreatedAt   DateTime           @map("provider_created_at") @db.Timestamptz(6)
+  expiresAt           DateTime?          @map("expires_at") @db.Timestamptz(6)
+  acceptedAt          DateTime?          @map("accepted_at") @db.Timestamptz(6)
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization  Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  integration   FacebookIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  acceptedBy    Profile?            @relation("FacebookLeadAcceptor", fields: [acceptedByProfileId], references: [id], onDelete: SetNull)
+  convertedLead Lead?               @relation("FacebookConvertedLead", fields: [convertedLeadId], references: [id], onDelete: SetNull)
+  claims        FacebookLeadClaim[]
+
+  @@unique([organizationId, providerLeadId])
+  @@index([organizationId, status, expiresAt])
+  @@map("facebook_inbound_leads")
+}
+
+model FacebookLeadClaim {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  inboundLeadId  String              @map("inbound_lead_id") @db.Uuid
+  profileId      String              @map("profile_id") @db.Uuid
+  status         FacebookClaimStatus @default(PENDING)
+  respondedAt    DateTime?           @map("responded_at") @db.Timestamptz(6)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inboundLead  FacebookInboundLead @relation(fields: [inboundLeadId], references: [id], onDelete: Cascade)
+  profile      Profile             @relation("FacebookClaimProfile", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([inboundLeadId, profileId])
+  @@index([organizationId, profileId, status])
+  @@map("facebook_lead_claims")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  actorProfileId String?  @map("actor_profile_id") @db.Uuid
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id") @db.Uuid
+  metadata       Json?    @db.JsonB
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        Profile?     @relation("AuditActor", fields: [actorProfileId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, entityType, entityId])
+  @@index([actorProfileId, createdAt])
+  @@map("audit_logs")
+}

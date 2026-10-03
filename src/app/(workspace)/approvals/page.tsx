@@ -1,0 +1,26 @@
+import { CheckCircle2, ChevronRight, CircleAlert, Clock3, Search } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { ApprovalRequestDialog } from "@/components/approvals/approval-forms";
+import { getApprovalWorkspace } from "@/features/approvals/queries";
+import { approvalStatusLabels } from "@/features/approvals/schemas";
+
+export const metadata: Metadata = { title: "Approvals" };
+function first(value: string | string[] | undefined) { return Array.isArray(value) ? value[0] : value; }
+function personLabel(person: { firstName: string | null; lastName: string | null; username: string | null; email: string | null } | null) { return person ? [person.firstName, person.lastName].filter(Boolean).join(" ") || person.username || person.email || "Team member" : "System"; }
+const statusClass = { UNDER_PROCESS: "border-amber-200 bg-amber-50 text-amber-700", ACCEPTED: "border-emerald-200 bg-emerald-50 text-emerald-700", REJECTED: "border-rose-200 bg-rose-50 text-rose-600" } as const;
+
+export default async function ApprovalsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = await searchParams;
+  const data = await getApprovalWorkspace({ query: first(raw.query), status: first(raw.status) });
+  if (!data) redirect("/dashboard");
+  return <div className="mx-auto w-full max-w-6xl">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-gray-500 sm:text-sm"><Link href="/dashboard" className="hover:text-[#20aee3]">Dashboard</Link><span>›</span><span>Approvals</span></nav>
+    <div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><h1 className="text-[28px] font-light text-[#20aee3] sm:text-[32px]">Approvals</h1><p className="mt-1 text-sm text-gray-500">Submit requests, track decisions, and keep an auditable record.</p></div><ApprovalRequestDialog /></div>
+    <section className="mt-6 grid gap-4 sm:grid-cols-2"><article className="surface-card surface-card-interactive flex items-center gap-4 rounded-lg p-5"><span className="flex size-11 items-center justify-center rounded-lg bg-sky-50 text-[#20aee3]"><CheckCircle2 className="size-5" /></span><div><p className="text-2xl font-medium text-gray-700">{data.counts.total}</p><p className="text-xs text-gray-500">Visible requests</p></div></article><article className="surface-card surface-card-interactive flex items-center gap-4 rounded-lg p-5"><span className="flex size-11 items-center justify-center rounded-lg bg-amber-50 text-amber-600"><Clock3 className="size-5" /></span><div><p className="text-2xl font-medium text-gray-700">{data.counts.pending}</p><p className="text-xs text-gray-500">Awaiting decision</p></div></article></section>
+    <section className="surface-card mt-6 rounded-lg p-3 sm:p-5"><form action="/approvals" className="grid gap-3 sm:grid-cols-[1fr_180px_auto]"><label className="relative"><Search className="absolute left-3 top-3 size-4 text-gray-400" /><span className="sr-only">Search requests</span><input name="query" defaultValue={data.filters.query} placeholder="Search requests" className="h-10 w-full rounded-md border border-gray-200 bg-[#f8fbfc] pl-9 pr-3 text-sm outline-none focus:border-[#20aee3]" /></label><select name="status" defaultValue={data.filters.status ?? ""} className="h-10 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-600"><option value="">All statuses</option>{Object.entries(approvalStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><div className="flex gap-2"><button className="h-10 flex-1 rounded-md bg-[#20aee3] px-4 text-sm font-medium text-white">Apply</button><Link href="/approvals" className="inline-flex h-10 items-center rounded-md border border-gray-200 px-4 text-sm text-gray-600">Clear</Link></div></form></section>
+    <section className="mt-4 grid gap-3">{data.approvals.length === 0 ? <div className="surface-card rounded-lg px-5 py-16 text-center"><CircleAlert className="mx-auto size-9 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No approval requests match this view.</p></div> : data.approvals.map((approval) => <Link key={approval.id} href={`/approvals/${approval.id}`} className="surface-card surface-card-interactive group rounded-lg p-4 sm:p-5"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="font-medium text-gray-700 group-hover:text-[#20aee3]">{approval.title ?? "Approval request"}</h2><span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${statusClass[approval.status]}`}>{approvalStatusLabels[approval.status]}</span></div><p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">{approval.description}</p><p className="mt-3 text-xs text-gray-400">{approval.uid ?? approval.id.slice(0, 8)} · Requested by {personLabel(approval.requestedBy)} · {approval.createdAt.toLocaleString()}</p></div><ChevronRight className="mt-1 size-5 shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-[#20aee3]" /></div></Link>)}</section>
+  </div>;
+}

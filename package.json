@@ -1,0 +1,60 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:format": "prisma format --config prisma7.config.ts",
+    "db:generate": "prisma generate --config prisma7.config.ts",
+    "db:validate": "prisma validate --config prisma7.config.ts",
+    "migrate:stage3": "node scripts/migration/run-stage3.mjs",
+    "migrate:stage5": "node scripts/migration/run-stage5.mjs",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.0",
+    "@tanstack/react-query": "^5.103.2",
+    "clsx": "^2.1.1",
+    "dotenv": "^18.0.3",
+    "lucide-react": "^1.47.0",
+    "next": "16.3.6",
+    "pg": "^8.23.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-hook-form": "^7.88.0",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.6",
+    "jsdom": "^29.1.1",
+    "prisma": "^8.0.0-rc.19",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^4.1.11"
+  }
+}
