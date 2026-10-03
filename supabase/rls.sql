@@ -632,3 +632,47 @@ create policy payroll_transcripts_staff_update
 on public.payroll_transcripts for update to authenticated
 using (private.has_org_role(organization_id, array['manager', 'super_admin']))
 with check (private.has_org_role(organization_id, array['manager', 'super_admin']));
+
+-- Integration metadata contains secret references and is management-only.
+-- Inbound lead rows are readable by staff, while writes flow through the
+-- signature-verified server webhook and authorized server actions.
+drop policy if exists facebook_integrations_staff_select on public.facebook_integrations;
+create policy facebook_integrations_staff_select
+on public.facebook_integrations for select to authenticated
+using (private.has_org_role(organization_id, array['manager', 'super_admin']));
+
+drop policy if exists facebook_integrations_staff_insert on public.facebook_integrations;
+create policy facebook_integrations_staff_insert
+on public.facebook_integrations for insert to authenticated
+with check (private.has_org_role(organization_id, array['manager', 'super_admin']));
+
+drop policy if exists facebook_integrations_staff_update on public.facebook_integrations;
+create policy facebook_integrations_staff_update
+on public.facebook_integrations for update to authenticated
+using (private.has_org_role(organization_id, array['manager', 'super_admin']))
+with check (private.has_org_role(organization_id, array['manager', 'super_admin']));
+
+drop policy if exists facebook_inbound_leads_staff_insert on public.facebook_inbound_leads;
+create policy facebook_inbound_leads_staff_insert
+on public.facebook_inbound_leads for insert to authenticated
+with check (private.has_org_role(organization_id, array['manager', 'super_admin']));
+
+drop policy if exists facebook_inbound_leads_staff_select on public.facebook_inbound_leads;
+create policy facebook_inbound_leads_staff_select
+on public.facebook_inbound_leads for select to authenticated
+using (
+  private.has_org_role(organization_id, array['manager', 'super_admin'])
+  or exists (
+    select 1
+    from public.facebook_lead_claims claim
+    where claim.inbound_lead_id = facebook_inbound_leads.id
+      and claim.profile_id = private.current_profile_id()
+      and private.is_org_member(facebook_inbound_leads.organization_id)
+  )
+);
+
+drop policy if exists facebook_inbound_leads_staff_update on public.facebook_inbound_leads;
+create policy facebook_inbound_leads_staff_update
+on public.facebook_inbound_leads for update to authenticated
+using (private.has_org_role(organization_id, array['manager', 'super_admin']))
+with check (private.has_org_role(organization_id, array['manager', 'super_admin']));
