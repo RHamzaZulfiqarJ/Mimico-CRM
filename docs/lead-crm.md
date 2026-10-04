@@ -25,6 +25,10 @@ All reads apply the organization and role predicates in Prisma. The interface ne
 - Add timestamped follow-ups that retain the actor and update the lead stage.
 - Reassign leads through an active staff membership.
 - Archive leads without deleting their history.
+- Import up to 1,000 leads from a validated CSV file. Imports support quoted
+  values, readable stage/priority labels, project title/UID matching, optional
+  manager-controlled assignee emails, duplicate reporting, and atomic batched
+  creation of leads, assignments, and initial follow-ups.
 - Record creation, updates, follow-ups, assignments, and archival in the audit log.
 
 ## Performance notes
@@ -32,7 +36,9 @@ All reads apply the organization and role predicates in Prisma. The interface ne
 The lead list fetches one 30-record page at a time and no longer loads unused
 follow-up history or aggregate counts. Creation validates independent
 relationships concurrently, then batches the lead, assignment, initial
-follow-up, and audit entry into one atomic write transaction.
+follow-up, and audit entry into one atomic write transaction. CSV imports
+validate the entire file before writing and use three bulk inserts inside one
+transaction instead of one database round trip per row.
 
 Keep the production Next.js runtime in the same or a nearby region as the
 Supabase database. Local development still pays the physical network latency
@@ -41,6 +47,5 @@ between the developer machine and the configured database region.
 ## Remaining Stage 4 work
 
 - Import and reconcile legacy leads, assignments, follow-ups, and attachments.
-- Add validated CSV import with a row-level report.
 - Transfer lead images to Supabase Storage and create attachment metadata.
 - Run cross-role integration and acceptance tests against the connected Supabase/PostgreSQL environment.

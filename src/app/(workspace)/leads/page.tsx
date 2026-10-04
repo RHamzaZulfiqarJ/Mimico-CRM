@@ -7,13 +7,13 @@ import {
   MoreVertical,
   RefreshCw,
   Search,
-  Upload,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LeadCreateDialog } from "@/components/leads/lead-forms";
+import { LeadImportDialog } from "@/components/leads/lead-import-dialog";
 import { displayLeadUid } from "@/features/leads/identifiers";
 import { getLeadWorkspace } from "@/features/leads/queries";
 import {
@@ -110,7 +110,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
             </form>
           </details>
           <button disabled aria-label="Call reminders, coming soon" title="Call reminders are coming soon" className={toolbarButton}><BellRing className="size-5" /></button>
-          <button disabled aria-label="Upload leads, coming soon" title="Lead import is coming soon" className={toolbarButton}><Upload className="size-5" /></button>
+          {canCreateLead(data.auth.membership.role) ? <LeadImportDialog buttonClassName={toolbarButton} /> : null}
           {canCreateLead(data.auth.membership.role) ? <LeadCreateDialog projects={projectOptions} staff={staffOptions} canChooseAssignee={canManageOrganization(data.auth.membership.role)} /> : null}
           </div>
         </div>
