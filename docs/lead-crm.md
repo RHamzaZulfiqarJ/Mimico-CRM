@@ -6,9 +6,9 @@ The Stage 4 lead workspace is available at `/leads`. It uses the relational `Lea
 
 | Role | Visibility | Mutations |
 | --- | --- | --- |
-| `SUPER_ADMIN`, `MANAGER` | Every active lead in the organization | Create, update progress, add follow-ups, reassign, archive |
-| `EMPLOYEE` | Only leads assigned to their profile | Create a lead assigned to self, update progress, add follow-ups |
-| `CLIENT` | Only leads linked to their portal client record | Read-only |
+| `SUPER_ADMIN`, `MANAGER` | Every active lead in the organization | Create, update progress, add follow-ups, reassign, archive, upload and delete attachments |
+| `EMPLOYEE` | Only leads assigned to their profile | Create a lead assigned to self, update progress, add follow-ups, upload attachments |
+| `CLIENT` | Only leads linked to their portal client record | Read-only, including attachment downloads |
 
 All reads apply the organization and role predicates in Prisma. The interface never loads all tenant leads and filters them in memory. Mutations validate the same authorization, organization, and relationship boundaries before an atomic write.
 
@@ -29,7 +29,10 @@ All reads apply the organization and role predicates in Prisma. The interface ne
   values, readable stage/priority labels, project title/UID matching, optional
   manager-controlled assignee emails, duplicate reporting, and atomic batched
   creation of leads, assignments, and initial follow-ups.
-- Record creation, updates, follow-ups, assignments, and archival in the audit log.
+- Upload images, PDF, Word, and Excel documents up to 10 MB directly to the
+  private `crm-attachments` Supabase Storage bucket. Downloads use short-lived
+  signed URLs, and only organization managers can delete attachment records.
+- Record lead creation, updates, follow-ups, assignments, archival, and attachment changes in the audit log.
 
 ## Performance notes
 
@@ -40,6 +43,12 @@ follow-up, and audit entry into one atomic write transaction. CSV imports
 validate the entire file before writing and use three bulk inserts inside one
 transaction instead of one database round trip per row.
 
+Attachment bytes upload directly from the browser to Supabase Storage through
+a single-object signed upload URL, avoiding a Vercel server-function proxy. The
+server still checks lead access before issuing the upload token and verifies the
+stored object's type and size before exposing it in the lead record. The bucket
+is created on first use and kept private using `SUPABASE_SECRET_KEY`.
+
 Keep the production Next.js runtime in the same or a nearby region as the
 Supabase database. Local development still pays the physical network latency
 between the developer machine and the configured database region.
@@ -47,5 +56,5 @@ between the developer machine and the configured database region.
 ## Remaining Stage 4 work
 
 - Import and reconcile legacy leads, assignments, follow-ups, and attachments.
-- Transfer lead images to Supabase Storage and create attachment metadata.
+- Transfer legacy lead images to the private Storage bucket and reconcile their attachment metadata.
 - Run cross-role integration and acceptance tests against the connected Supabase/PostgreSQL environment.

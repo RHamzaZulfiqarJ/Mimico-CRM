@@ -1,10 +1,13 @@
-import { Archive, MoreVertical } from "lucide-react";
+import { Archive, Download, FileText, MoreVertical, Paperclip, Trash2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AssignmentForm, FollowUpForm, LeadProgressForm } from "@/components/leads/lead-forms";
+import { AttachmentUploader } from "@/components/leads/attachment-uploader";
 import { RefundCreateDialog } from "@/components/refunds/refund-forms";
+import { deleteLeadAttachmentAction } from "@/features/attachments/actions";
+import { formatAttachmentSize } from "@/features/attachments/policy";
 import { archiveLeadAction } from "@/features/leads/actions";
 import { displayLeadUid } from "@/features/leads/identifiers";
 import { getLeadDetails } from "@/features/leads/queries";
@@ -98,6 +101,17 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
       ) : null}
 
       {canManage ? <section className="surface-card mt-4 rounded-lg p-4 sm:p-5"><h2 className="mb-4 text-xl font-normal text-[#ff5c6c]">Shift Lead</h2><div className="max-w-md"><AssignmentForm leadId={lead.id} staff={staffOptions} currentProfileId={lead.assignments[0]?.profile.id} /></div></section> : null}
+
+      <section className="surface-card mt-4 rounded-lg p-4 sm:p-5">
+        <div className="flex items-center gap-2"><Paperclip className="size-5 text-[#ff5c6c]" /><h2 className="text-xl font-normal text-[#ff5c6c]">Attachments</h2></div>
+        {canEdit ? <div className="mt-4 max-w-2xl"><AttachmentUploader leadId={lead.id} /></div> : null}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {lead.attachments.length === 0 ? <div className="col-span-full rounded-lg border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-400">No attachments uploaded.</div> : lead.attachments.map((attachment) => {
+            const deleteAction = deleteLeadAttachmentAction.bind(null, attachment.id);
+            return <article key={attachment.id} className="flex min-w-0 items-center gap-3 rounded-lg border border-gray-100 bg-[#f8fbfc] p-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#20aee3] shadow-sm"><FileText className="size-5" /></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-gray-700">{attachment.originalName ?? "Attachment"}</p><p className="mt-1 truncate text-[11px] text-gray-400">{formatAttachmentSize(attachment.sizeBytes)} · {attachment.createdBy ? personLabel(attachment.createdBy) : "System"} · {attachment.createdAt.toLocaleDateString("en-GB")}</p></div><a href={`/api/attachments/${attachment.id}/download`} title="Download attachment" aria-label={`Download ${attachment.originalName ?? "attachment"}`} className="rounded-md p-2 text-[#20aee3] transition hover:bg-sky-50"><Download className="size-4" /></a>{canManage ? <form action={deleteAction}><button title="Delete attachment" aria-label={`Delete ${attachment.originalName ?? "attachment"}`} className="rounded-md p-2 text-rose-500 transition hover:bg-rose-50"><Trash2 className="size-4" /></button></form> : null}</article>;
+          })}
+        </div>
+      </section>
 
       <section className="surface-card mt-4 rounded-lg p-4 sm:p-5">
         <h2 className="text-xl font-normal text-[#ff5c6c]">Follow Ups</h2>

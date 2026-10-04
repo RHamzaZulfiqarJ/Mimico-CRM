@@ -184,6 +184,19 @@ export async function getLeadDetails(leadId: string) {
             },
           },
         },
+        attachments: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            originalName: true,
+            contentType: true,
+            sizeBytes: true,
+            createdAt: true,
+            createdBy: {
+              select: { firstName: true, lastName: true, username: true, email: true },
+            },
+          },
+        },
       },
     }),
     isStaff(auth.membership.role)
