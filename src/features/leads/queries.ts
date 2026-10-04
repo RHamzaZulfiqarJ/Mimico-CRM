@@ -9,7 +9,7 @@ function accessWhere(auth: AuthContext) {
   if (auth.membership.role === "EMPLOYEE") {
     return { assignments: { some: { profileId: auth.profile.id } } };
   }
-  return { client: { portalProfileId: auth.profile.id } };
+  return { client: { portalProfileId: auth.profile.id, isActive: true } };
 }
 
 export async function getLeadWorkspace(rawFilters: {

@@ -28,10 +28,6 @@ import type { MembershipRole } from "@/lib/auth/authorization";
 type NavigationProps = { role: MembershipRole; onNavigate?: () => void };
 const itemClass = "group flex min-h-11 w-full items-center gap-2 border-l-[3px] px-4 text-left text-sm font-light transition-all duration-200";
 
-function DisabledItem({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
-  return <span aria-disabled="true" title="Available in a later migration stage" className={`${itemClass} border-l-transparent text-gray-400`}><Icon className="size-[21px] shrink-0 stroke-[1.4]" /><span className="min-w-0 flex-1 truncate">{label}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-400">Soon</span></span>;
-}
-
 function NavigationGroup({ name, icon: Icon, open, onToggle, children }: { name: string; icon: LucideIcon; open: boolean; onToggle: () => void; children: ReactNode }) {
   return (
     <div>
@@ -48,7 +44,7 @@ function NavigationGroup({ name, icon: Icon, open, onToggle, children }: { name:
 export function WorkspaceNavigation({ role, onNavigate }: NavigationProps) {
   const pathname = usePathname();
   const [openGroup, setOpenGroup] = useState<string | null>(() => {
-    if (pathname.startsWith("/team")) return "User";
+    if (pathname.startsWith("/team") || pathname.startsWith("/clients")) return "User";
     if (pathname.startsWith("/reference-data")) return "Inventory";
     if ((pathname.startsWith("/approvals") || pathname.startsWith("/refunds")) && (role === "MANAGER" || role === "SUPER_ADMIN")) return "Authorization";
     if (pathname.startsWith("/cashbook")) return "Cash Book";
@@ -63,10 +59,10 @@ export function WorkspaceNavigation({ role, onNavigate }: NavigationProps) {
       <Link href="/dashboard" aria-current={pathname === "/dashboard" ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname === "/dashboard")}><House className="size-[21px] stroke-[1.4] transition-transform group-hover:scale-105" />Dashboard</Link>
       <Link href="/leads" aria-current={pathname.startsWith("/leads") ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname.startsWith("/leads"))}><ContactRound className="size-[21px] stroke-[1.4] transition-transform group-hover:scale-105" />Leads</Link>
       {staff ? <><Link href="/tasks" aria-current={pathname.startsWith("/tasks") ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname.startsWith("/tasks"))}><ListChecks className="size-[21px] stroke-[1.4] transition-transform group-hover:scale-105" />To Do Tasks</Link><Link href="/calendar" aria-current={pathname.startsWith("/calendar") ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname.startsWith("/calendar"))}><CalendarDays className="size-[21px] stroke-[1.4] transition-transform group-hover:scale-105" />Calendar</Link></> : null}
-      <NavigationGroup name="User" icon={UserRound} open={openGroup === "User"} onToggle={() => setOpenGroup(openGroup === "User" ? null : "User")}>
-        <DisabledItem icon={UsersRound} label="Clients" />
+      {staff ? <NavigationGroup name="User" icon={UserRound} open={openGroup === "User"} onToggle={() => setOpenGroup(openGroup === "User" ? null : "User")}>
+        <Link href="/clients" onClick={onNavigate} className={linkClass(pathname.startsWith("/clients"))}><UsersRound className="size-[22px] stroke-[1.4]" />Clients</Link>
         {management ? <Link href="/team" onClick={onNavigate} className={linkClass(pathname.startsWith("/team"))}><UsersRound className="size-[22px] stroke-[1.4]" />Employees</Link> : null}
-      </NavigationGroup>
+      </NavigationGroup> : null}
       {management ? <NavigationGroup name="Authorization" icon={ClipboardCheck} open={openGroup === "Authorization"} onToggle={() => setOpenGroup(openGroup === "Authorization" ? null : "Authorization")}><Link href="/approvals" onClick={onNavigate} className={linkClass(pathname.startsWith("/approvals"))}><ClipboardCheck className="size-[22px] stroke-[1.4]" />Approvals</Link><Link href="/refunds" onClick={onNavigate} className={linkClass(pathname.startsWith("/refunds"))}><CircleDollarSign className="size-[22px] stroke-[1.4]" />Refunds</Link></NavigationGroup> : staff ? <><Link href="/approvals" aria-current={pathname.startsWith("/approvals") ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname.startsWith("/approvals"))}><ClipboardCheck className="size-[21px] stroke-[1.4]" />Approvals</Link><Link href="/refunds" aria-current={pathname.startsWith("/refunds") ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname.startsWith("/refunds"))}><CircleDollarSign className="size-[21px] stroke-[1.4]" />Refunds</Link></> : null}
       {management ? (
         <NavigationGroup name="Inventory" icon={Warehouse} open={openGroup === "Inventory"} onToggle={() => setOpenGroup(openGroup === "Inventory" ? null : "Inventory")}>

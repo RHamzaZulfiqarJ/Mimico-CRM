@@ -129,6 +129,7 @@ as $$
             select 1
             from public.clients as client
             where client.id = lead.client_id
+              and client.is_active
               and client.portal_profile_id = private.current_profile_id()
           )
         )
@@ -192,7 +193,9 @@ grant select on table public.organizations to authenticated;
 grant select on table public.profiles to authenticated;
 grant update (first_name, last_name, phone, city, cnic) on table public.profiles to authenticated;
 grant select on table public.organization_memberships to authenticated;
-grant select, insert, update, delete on table public.clients to authenticated;
+-- Client mutations are server-only so employees cannot bypass the application's
+-- manager-only portal-link and lifecycle controls through the Data API.
+grant select on table public.clients to authenticated;
 grant select, insert, update, delete on table public.leads to authenticated;
 grant select, insert, update, delete on table public.lead_assignments to authenticated;
 grant select, insert, update, delete on table public.follow_ups to authenticated;
@@ -231,7 +234,8 @@ on public.clients for select to authenticated
 using (
   private.has_org_role(organization_id, array['employee', 'manager', 'super_admin'])
   or (
-    portal_profile_id = private.current_profile_id()
+    is_active
+    and portal_profile_id = private.current_profile_id()
     and private.has_org_role(organization_id, array['client'])
   )
 );
