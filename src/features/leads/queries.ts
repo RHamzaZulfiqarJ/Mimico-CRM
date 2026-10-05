@@ -17,6 +17,7 @@ export async function getLeadWorkspace(rawFilters: {
   stage?: string;
   priority?: string;
   projectId?: string;
+  archived?: string;
   page?: string;
 }) {
   const auth = await getAuthContext();
@@ -26,10 +27,11 @@ export async function getLeadWorkspace(rawFilters: {
   const database = getDatabase();
   const organizationId = auth.organization.id;
   const roleAccess = accessWhere(auth);
+  const archived = filters.archived === true && canManageOrganization(auth.membership.role);
   const pageSize = 30;
   const where = {
     organizationId,
-    isArchived: false,
+    isArchived: archived,
     ...roleAccess,
     stage: filters.stage,
     priority: filters.priority,
@@ -90,7 +92,7 @@ export async function getLeadWorkspace(rawFilters: {
       orderBy: { title: "asc" },
       select: { id: true, title: true },
     }),
-    canManageOrganization(auth.membership.role)
+    canManageOrganization(auth.membership.role) && !archived
       ? database.organizationMembership.findMany({
           where: {
             organizationId,
@@ -118,7 +120,7 @@ export async function getLeadWorkspace(rawFilters: {
 
   return {
     auth,
-    filters,
+    filters: { ...filters, archived },
     leads,
     projects,
     staff: staffMemberships.map(({ profile }) => profile),

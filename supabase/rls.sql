@@ -115,6 +115,8 @@ as $$
           array['manager', 'super_admin']
         )
         or (
+          not lead.is_archived
+          and
           private.has_org_role(lead.organization_id, array['employee'])
           and exists (
             select 1
@@ -124,6 +126,8 @@ as $$
           )
         )
         or (
+          not lead.is_archived
+          and
           private.has_org_role(lead.organization_id, array['client'])
           and exists (
             select 1

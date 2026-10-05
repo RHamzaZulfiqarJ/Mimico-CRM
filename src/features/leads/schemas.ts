@@ -82,6 +82,7 @@ export const leadFiltersSchema = z.object({
   stage: z.enum(leadStages).optional().catch(undefined),
   priority: z.enum(leadPriorities).optional().catch(undefined),
   projectId: z.uuid().optional().catch(undefined),
+  archived: z.literal("true").transform(() => true).optional().catch(undefined),
   page: z.coerce.number().int().min(1).max(10_000).catch(1),
 });
 

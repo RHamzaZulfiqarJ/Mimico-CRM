@@ -424,3 +424,51 @@ export async function archiveLeadAction(leadId: string) {
   revalidatePath("/leads");
   redirect("/leads");
 }
+
+export async function restoreLeadAction(leadId: string) {
+  const auth = await getAuthContext();
+  if (!auth || !canDeleteOperationalRecord(auth.membership.role)) return;
+
+  const database = getDatabase();
+  const result = await database.$transaction(async (transaction) => {
+    const lead = await transaction.lead.findFirst({
+      where: { id: leadId, organizationId: auth.organization.id, isArchived: true },
+      select: { id: true, clientPhone: true },
+    });
+    if (!lead) return "not_found" as const;
+
+    if (lead.clientPhone) {
+      const duplicate = await transaction.lead.findFirst({
+        where: {
+          organizationId: auth.organization.id,
+          clientPhone: lead.clientPhone,
+          isArchived: false,
+        },
+        select: { id: true },
+      });
+      if (duplicate) return "duplicate_phone" as const;
+    }
+
+    const restored = await transaction.lead.updateMany({
+      where: { id: lead.id, organizationId: auth.organization.id, isArchived: true },
+      data: { isArchived: false },
+    });
+    if (restored.count !== 1) return "not_found" as const;
+
+    await transaction.auditLog.create({
+      data: {
+        organizationId: auth.organization.id,
+        actorProfileId: auth.profile.id,
+        action: "lead.restored",
+        entityType: "Lead",
+        entityId: lead.id,
+      },
+    });
+    return "restored" as const;
+  }, { isolationLevel: "Serializable" });
+
+  revalidatePath("/leads");
+  if (result === "duplicate_phone") {
+    redirect("/leads?archived=true&error=duplicate-phone");
+  }
+}

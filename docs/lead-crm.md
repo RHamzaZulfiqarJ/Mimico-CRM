@@ -25,6 +25,8 @@ All reads apply the organization and role predicates in Prisma. The interface ne
 - Add timestamped follow-ups that retain the actor and update the lead stage.
 - Reassign leads through an active staff membership.
 - Archive leads without deleting their history.
+- Review archived leads in the same indexed workspace and restore them with an
+  audit entry. Restoration refuses to recreate an active duplicate phone.
 - Import up to 1,000 leads from a validated CSV file. Imports support quoted
   values, readable stage/priority labels, project title/UID matching, optional
   manager-controlled assignee emails, duplicate reporting, and atomic batched

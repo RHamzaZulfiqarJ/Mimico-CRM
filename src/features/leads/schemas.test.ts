@@ -87,8 +87,14 @@ describe("lead schemas", () => {
         stage: "invalid",
         priority: "HOT",
         projectId: "invalid",
+        archived: "false",
       }),
     ).toEqual({ query: "ali", priority: "HOT", page: 1 });
+  });
+
+  it("accepts only the explicit archived view", () => {
+    expect(leadFiltersSchema.parse({ archived: "true" }).archived).toBe(true);
+    expect(leadFiltersSchema.parse({ archived: "yes" }).archived).toBeUndefined();
   });
 
   it("normalizes lead pagination", () => {
