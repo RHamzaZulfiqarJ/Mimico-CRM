@@ -406,6 +406,7 @@ model FollowUp {
 
   @@unique([organizationId, uid])
   @@index([organizationId, leadId, followUpAt])
+  @@index([organizationId, leadId, createdAt(sort: Desc)])
   @@map("follow_ups")
 }
 

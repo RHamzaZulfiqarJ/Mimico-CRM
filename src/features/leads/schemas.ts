@@ -86,6 +86,20 @@ export const leadFiltersSchema = z.object({
   page: z.coerce.number().int().min(1).max(10_000).catch(1),
 });
 
+export const leadReminderViews = [
+  "due",
+  "today",
+  "upcoming",
+  "month",
+  "all",
+] as const;
+
+export const leadReminderFiltersSchema = z.object({
+  query: z.string().trim().max(120).optional().catch(undefined),
+  view: z.enum(leadReminderViews).catch("due"),
+  page: z.coerce.number().int().min(1).max(10_000).catch(1),
+});
+
 export type LeadFormState = {
   status: "idle" | "error" | "success";
   message?: string;

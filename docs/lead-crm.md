@@ -55,6 +55,15 @@ Keep the production Next.js runtime in the same or a nearby region as the
 Supabase database. Local development still pays the physical network latency
 between the developer machine and the configured database region.
 
+The call-reminders workspace at `/leads/reminders` loads only the newest
+follow-up record for each active lead. A newer update without a scheduled time
+clears that lead from the reminder queue, so an older reminder cannot reappear.
+Managers see the organization queue, while employees see only leads assigned
+to them. The paginated reminder rows and overdue/today/upcoming totals are
+queried concurrently and all calendar boundaries use `Asia/Karachi`.
+The supporting organization/lead/creation-time index is installed by the
+`20261005230000_lead_reminder_performance` Prisma migration.
+
 ## Remaining Stage 4 work
 
 - Import and reconcile legacy leads, assignments, follow-ups, and attachments.

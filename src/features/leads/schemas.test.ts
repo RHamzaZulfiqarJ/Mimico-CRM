@@ -4,6 +4,7 @@ import {
   createLeadSchema,
   followUpSchema,
   leadFiltersSchema,
+  leadReminderFiltersSchema,
   updateLeadSchema,
 } from "./schemas";
 
@@ -101,5 +102,19 @@ describe("lead schemas", () => {
     expect(leadFiltersSchema.parse({ page: "3" }).page).toBe(3);
     expect(leadFiltersSchema.parse({ page: "-1" }).page).toBe(1);
     expect(leadFiltersSchema.parse({ page: "not-a-page" }).page).toBe(1);
+  });
+
+  it("normalizes call-reminder filters", () => {
+    expect(
+      leadReminderFiltersSchema.parse({
+        query: "  Lahore ",
+        view: "upcoming",
+        page: "2",
+      }),
+    ).toEqual({ query: "Lahore", view: "upcoming", page: 2 });
+
+    expect(
+      leadReminderFiltersSchema.parse({ view: "invalid", page: "zero" }),
+    ).toEqual({ view: "due", page: 1 });
   });
 });

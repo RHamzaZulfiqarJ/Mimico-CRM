@@ -114,7 +114,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
               <div className="flex justify-end gap-2"><Link href={data.filters.archived ? "/leads?archived=true" : "/leads"} className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50">Clear</Link><button className="rounded-md bg-[#20aee3] px-3 py-2 text-sm text-white transition hover:bg-[#179bd0]">Apply</button></div>
             </form>
           </details>
-          <button disabled aria-label="Call reminders, coming soon" title="Call reminders are coming soon" className={toolbarButton}><BellRing className="size-5" /></button>
+          {!data.filters.archived && canCreateLead(data.auth.membership.role) ? <Link href="/leads/reminders" aria-label="Call reminders" title="Call reminders" className={toolbarButton}><BellRing className="size-5" /></Link> : null}
           {!data.filters.archived && canCreateLead(data.auth.membership.role) ? <LeadImportDialog buttonClassName={toolbarButton} /> : null}
           {!data.filters.archived && canCreateLead(data.auth.membership.role) ? <LeadCreateDialog projects={projectOptions} staff={staffOptions} canChooseAssignee={canManageOrganization(data.auth.membership.role)} /> : null}
           </div>
