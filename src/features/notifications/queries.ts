@@ -1,9 +1,10 @@
+import { isStaff } from "@/lib/auth/authorization";
 import { getAuthContext } from "@/lib/auth/session";
 import { getDatabase } from "@/lib/database";
 
 export async function getNotificationCenter() {
   const auth = await getAuthContext();
-  if (!auth) return null;
+  if (!auth || !isStaff(auth.membership.role)) return null;
 
   const database = getDatabase();
   const where = {

@@ -18,8 +18,8 @@ import Link from "next/link";
 
 import {
   metricBarHeight,
-  metricPercentage,
 } from "@/features/dashboard/metrics";
+import { ClientDashboard } from "@/components/client/client-dashboard";
 import { getDashboardWorkspace } from "@/features/dashboard/queries";
 import { displayLeadUid } from "@/features/leads/identifiers";
 import { stageLabels } from "@/features/leads/schemas";
@@ -61,14 +61,6 @@ const databaseStageLabels: Record<string, string> = {
   closedLost: "Closed lost",
 };
 
-const databasePriorityLabels: Record<string, string> = {
-  veryCold: "Very cold",
-  cold: "Cold",
-  moderate: "Moderate",
-  hot: "Hot",
-  veryHot: "Very hot",
-};
-
 const roleLabels = {
   CLIENT: "Client",
   EMPLOYEE: "Employee",
@@ -106,9 +98,9 @@ export default async function DashboardPage() {
   const data = await getDashboardWorkspace();
   if (!data) return null;
 
+  if (!data.isStaff) return <ClientDashboard data={data} />;
+
   const { auth, leadMetrics, staffMetrics } = data;
-  const closedLeads = leadMetrics.wonLeads + leadMetrics.lostLeads;
-  const conversion = metricPercentage(leadMetrics.wonLeads, closedLeads);
   const monthlyMaximum = Math.max(
     1,
     ...leadMetrics.monthlyLeads.map((bucket) => bucket.count),
@@ -124,19 +116,12 @@ export default async function DashboardPage() {
       Number(bucket.expense),
     ]) ?? []),
   );
-  const primaryCards: StatCardProps[] = data.isStaff
-    ? [
-        { label: "Active leads", value: leadMetrics.activeLeads, detail: `${leadMetrics.newThisMonth} added this month`, href: "/leads", icon: ContactRound, tone: "bg-sky-50 text-[#20aee3]" },
-        { label: "New this month", value: leadMetrics.newThisMonth, detail: "Pakistan calendar month", href: "/leads", icon: UserPlus, tone: "bg-emerald-50 text-emerald-600" },
-        { label: "Calls due", value: leadMetrics.dueCalls, detail: "Overdue and due today", href: "/leads/reminders", icon: PhoneCall, tone: "bg-rose-50 text-[#ff5c6c]" },
-        { label: "Open tasks", value: staffMetrics?.openTasks ?? 0, detail: `${staffMetrics?.tasksDueToday ?? 0} due today`, href: "/tasks", icon: ListChecks, tone: "bg-amber-50 text-amber-600" },
-      ]
-    : [
-        { label: "Active leads", value: leadMetrics.activeLeads, detail: "Linked to your client profile", href: "/leads", icon: ContactRound, tone: "bg-sky-50 text-[#20aee3]" },
-        { label: "New this month", value: leadMetrics.newThisMonth, detail: "Recently added opportunities", href: "/leads", icon: UserPlus, tone: "bg-emerald-50 text-emerald-600" },
-        { label: "Closed won", value: leadMetrics.wonLeads, detail: "Successful opportunities", href: "/leads?stage=CLOSED_WON", icon: CheckCircle2, tone: "bg-emerald-50 text-emerald-600" },
-        { label: "Conversion", value: `${conversion}%`, detail: "Across closed opportunities", href: "/leads", icon: TrendingUp, tone: "bg-violet-50 text-violet-600" },
-      ];
+  const primaryCards: StatCardProps[] = [
+    { label: "Active leads", value: leadMetrics.activeLeads, detail: `${leadMetrics.newThisMonth} added this month`, href: "/leads", icon: ContactRound, tone: "bg-sky-50 text-[#20aee3]" },
+    { label: "New this month", value: leadMetrics.newThisMonth, detail: "Pakistan calendar month", href: "/leads", icon: UserPlus, tone: "bg-emerald-50 text-emerald-600" },
+    { label: "Calls due", value: leadMetrics.dueCalls, detail: "Overdue and due today", href: "/leads/reminders", icon: PhoneCall, tone: "bg-rose-50 text-[#ff5c6c]" },
+    { label: "Open tasks", value: staffMetrics?.openTasks ?? 0, detail: `${staffMetrics?.tasksDueToday ?? 0} due today`, href: "/tasks", icon: ListChecks, tone: "bg-amber-50 text-amber-600" },
+  ];
 
   return (
     <div className="mx-auto w-full max-w-[1500px]">
@@ -196,12 +181,7 @@ export default async function DashboardPage() {
                 {staffMetrics.cashflow.map((bucket) => <div key={bucket.key} className="flex h-full min-w-14 flex-1 flex-col items-center justify-end"><div className="flex h-[calc(100%_-_28px)] w-full items-end justify-center gap-1"><div title={`${bucket.label} income: ${money(bucket.income)}`} className="w-[38%] max-w-8 rounded-t bg-emerald-400 transition-all duration-500 hover:bg-emerald-500" style={{ height: `${metricBarHeight(Number(bucket.income), cashMaximum)}%` }} /><div title={`${bucket.label} expense: ${money(bucket.expense)}`} className="w-[38%] max-w-8 rounded-t bg-rose-300 transition-all duration-500 hover:bg-rose-400" style={{ height: `${metricBarHeight(Number(bucket.expense), cashMaximum)}%` }} /></div><span className="py-2 text-xs text-gray-400">{bucket.label}</span></div>)}
               </div>
             </section>
-          ) : (
-            <section className="surface-card rounded-xl p-4 sm:p-5 lg:col-span-2">
-              <div className="flex items-center justify-between gap-3"><div><h2 className="font-medium text-gray-700">Lead priorities</h2><p className="mt-1 text-xs text-gray-400">Your active portfolio by priority</p></div><Link href="/leads" className="text-xs font-medium text-[#20aee3]">Open CRM</Link></div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{leadMetrics.priorities.map((bucket) => <article key={bucket.key} className="rounded-lg border border-gray-100 bg-[#f8fbfc] p-4"><p className="text-xl font-medium text-gray-700">{bucket.count}</p><p className="mt-1 text-xs text-gray-400">{databasePriorityLabels[bucket.key] ?? bucket.label}</p></article>)}</div>
-            </section>
-          )}
+          ) : null}
         </div>
 
         <aside className="grid content-start gap-4">

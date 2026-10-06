@@ -21,7 +21,7 @@ function notificationTarget(payload: unknown): { href: `/tasks/${string}` | `/ap
 
 export default async function NotificationsPage() {
   const data = await getNotificationCenter();
-  if (!data) redirect("/login?next=/notifications");
+  if (!data) redirect("/dashboard");
 
   return (
     <div className="mx-auto w-full max-w-5xl">

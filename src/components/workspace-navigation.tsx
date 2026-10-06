@@ -54,6 +54,15 @@ export function WorkspaceNavigation({ role, onNavigate }: NavigationProps) {
   const staff = role !== "CLIENT";
   const linkClass = (active: boolean) => `${itemClass} ${active ? "border-l-[#20aee3] bg-sky-50/70 font-medium text-[#20aee3]" : "border-l-transparent text-gray-700 hover:border-l-[#20aee3] hover:bg-slate-50 hover:text-[#20aee3]"}`;
 
+  if (role === "CLIENT") {
+    return (
+      <nav className="flex flex-col gap-1 py-1">
+        <Link href="/dashboard" onClick={onNavigate} className={linkClass(pathname === "/dashboard")}><House className="size-[21px] stroke-[1.4]" />Overview</Link>
+        <Link href="/leads" onClick={onNavigate} className={linkClass(pathname.startsWith("/leads"))}><ContactRound className="size-[21px] stroke-[1.4]" />My records</Link>
+      </nav>
+    );
+  }
+
   return (
     <nav className="flex flex-col gap-1 py-1">
       <Link href="/dashboard" aria-current={pathname === "/dashboard" ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname === "/dashboard")}><House className="size-[21px] stroke-[1.4] transition-transform group-hover:scale-105" />Dashboard</Link>

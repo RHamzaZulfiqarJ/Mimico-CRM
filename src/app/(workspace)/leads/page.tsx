@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 
 import { LeadCreateDialog } from "@/components/leads/lead-forms";
 import { LeadImportDialog } from "@/components/leads/lead-import-dialog";
+import { ClientRecords } from "@/components/client/client-records";
 import { restoreLeadAction } from "@/features/leads/actions";
 import { displayLeadUid } from "@/features/leads/identifiers";
 import { getLeadWorkspace } from "@/features/leads/queries";
@@ -61,6 +62,8 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const raw = await searchParams;
   const data = await getLeadWorkspace({ query: first(raw.query), stage: first(raw.stage), priority: first(raw.priority), projectId: first(raw.projectId), archived: first(raw.archived), page: first(raw.page) });
   if (!data) redirect("/access-pending");
+
+  if (data.auth.membership.role === "CLIENT") return <ClientRecords data={data} />;
 
   const projectOptions = data.projects.map((project) => ({ id: project.id, label: project.title }));
   const staffOptions = data.staff.map((profile) => ({ id: profile.id, label: personLabel(profile) }));

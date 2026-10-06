@@ -13,6 +13,18 @@ organization-scoped PostgreSQL directory.
   removes client-portal access to linked leads until the client is reactivated.
 - Client records are never hard-deleted by this interface.
 
+## Client information portal
+
+Client-role accounts use a separate read-only presentation rather than the
+staff CRM shell. Their navigation contains only Overview and My records. The
+overview shows linked-record totals and recent updates; record pages expose
+the project, current status, area, status history, and authorized documents.
+
+Internal CRM fields and operations are not rendered for clients, including
+lead priority and source, staff assignment, CNIC, internal follow-up remarks,
+Facebook tools, inventory management, tasks, finance, notifications, and
+administration. Staff and management workspaces retain their existing layout.
+
 ## Performance
 
 The directory fetches 30 records at a time, requests one extra record to detect

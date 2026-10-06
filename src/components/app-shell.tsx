@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Clock3, LogOut, Menu, X } from "lucide-react";
+import { Bell, Clock3, FileSearch, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
@@ -31,6 +31,7 @@ function Clock() {
 
 export function AppShell({ auth, children }: { auth: AuthContext; children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const clientPortal = auth.membership.role === "CLIENT";
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -48,6 +49,40 @@ export function AppShell({ auth, children }: { auth: AuthContext; children: Reac
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [sidebarOpen]);
+
+  if (clientPortal) {
+    return (
+      <div className="min-h-screen bg-[#f4f2ed] font-sans text-stone-700">
+        <a href="#main-content" className="fixed left-4 top-3 z-[200] -translate-y-20 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-transform focus:translate-y-0">Skip to content</a>
+        <header className="sticky top-0 z-30 border-b border-stone-300 bg-[#f4f2ed]/95 backdrop-blur">
+          <div className="mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6 lg:px-8">
+            <Link href="/dashboard" className="shrink-0">
+              <Image src="/images/Logo.png" alt="mimico" width={2172} height={724} className="h-auto w-32 object-contain" priority />
+            </Link>
+            <nav className="order-3 flex w-full items-center gap-6 border-t border-stone-300 pt-3 text-sm sm:order-none sm:w-auto sm:border-0 sm:pt-0" aria-label="Client portal">
+              <Link href="/dashboard" className="inline-flex items-center gap-2 font-medium text-slate-700 transition hover:text-slate-950"><LayoutDashboard className="size-4" />Overview</Link>
+              <Link href="/leads" className="inline-flex items-center gap-2 font-medium text-slate-700 transition hover:text-slate-950"><FileSearch className="size-4" />My records</Link>
+            </nav>
+            <div className="flex items-center gap-3">
+              <div className="hidden text-right md:block">
+                <p className="text-sm font-medium text-slate-800">{auth.profile.displayName}</p>
+                <p className="text-xs text-stone-500">Client access</p>
+              </div>
+              <span title={auth.profile.displayName} className="flex size-9 items-center justify-center border border-stone-300 bg-white text-sm font-medium text-slate-800">{auth.profile.displayName.slice(0, 1).toUpperCase()}</span>
+              <form action={signOutAction}>
+                <button type="submit" title="Sign out" className="border border-stone-300 bg-white p-2 text-stone-600 transition hover:border-slate-500 hover:text-slate-950"><LogOut className="size-4" /><span className="sr-only">Sign out</span></button>
+              </form>
+            </div>
+          </div>
+        </header>
+        <main id="main-content" tabIndex={-1} className="page-enter w-full px-4 py-8 outline-none sm:px-6 sm:py-10 lg:px-8">{children}</main>
+        <footer className="mx-auto flex max-w-7xl flex-col gap-1 border-t border-stone-300 px-4 py-6 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <span>{auth.organization.name} client information portal</span>
+          <span>Secure read-only access</span>
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f6f9fa] font-sans text-[#67757c] md:flex">

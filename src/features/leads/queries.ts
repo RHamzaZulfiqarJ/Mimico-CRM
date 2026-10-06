@@ -62,7 +62,9 @@ export async function getLeadWorkspace(rawFilters: {
         clientPhone: true,
         priority: true,
         stage: true,
+        area: true,
         createdAt: true,
+        updatedAt: true,
         project: { select: { id: true, title: true } },
         assignments: {
           orderBy: { assignedAt: "asc" },

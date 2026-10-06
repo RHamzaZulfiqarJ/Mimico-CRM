@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AssignmentForm, FollowUpForm, LeadProgressForm } from "@/components/leads/lead-forms";
 import { AttachmentUploader } from "@/components/leads/attachment-uploader";
+import { ClientRecordDetails } from "@/components/client/client-record-details";
 import { RefundCreateDialog } from "@/components/refunds/refund-forms";
 import { deleteLeadAttachmentAction } from "@/features/attachments/actions";
 import { formatAttachmentSize } from "@/features/attachments/policy";
@@ -30,6 +31,8 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
   if (!data.lead) notFound();
 
   const { lead } = data;
+  if (data.auth.membership.role === "CLIENT") return <ClientRecordDetails lead={lead} />;
+
   const canEdit = isStaff(data.auth.membership.role);
   const canManage = canManageOrganization(data.auth.membership.role);
   const projectOptions = data.projects.map((project) => ({ id: project.id, label: project.title }));
