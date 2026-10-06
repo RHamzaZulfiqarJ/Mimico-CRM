@@ -114,6 +114,41 @@ Review `storageManifest`, copy each object into the private `crm-attachments`
 bucket, verify it, and only then create its matching `Attachment` record. The
 legacy files and MongoDB data are never changed by this command.
 
+## Storage transfer — society and lead attachments
+
+After clean Stage 3 and Stage 4 dry-runs, validate their Storage manifests
+against the legacy server's upload directory. Supply each migration report with
+a separate `--manifest` argument:
+
+```powershell
+npm run migrate:storage -- --manifest C:\migration-output\stage3-dry-run.json --manifest C:\migration-output\stage4-dry-run.json --source-root "C:\Websites\Marcable Solutions\server" --output C:\migration-output\storage-dry-run.json
+```
+
+This is also a dry-run by default. It resolves every legacy path beneath the
+specified source root, rejects traversal and symlink escapes, enforces the CRM's
+10 MB/type policy, verifies file signatures, and records a SHA-256 hash. It
+does not connect to Supabase or PostgreSQL.
+
+Review every rejection and compare the accepted count with both source
+manifests. Then apply using the exact organization slug:
+
+```powershell
+npm run migrate:storage -- --manifest C:\migration-output\stage3-dry-run.json --manifest C:\migration-output\stage4-dry-run.json --source-root "C:\Websites\Marcable Solutions\server" --organization marcable --apply --output C:\migration-output\storage-apply.json
+```
+
+Apply mode requires `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, and
+`SUPABASE_SECRET_KEY`. It verifies that every referenced lead or society belongs
+to the target organization, keeps the bucket private, uploads with overwrite
+disabled, downloads each object to compare its hash, and only then creates or
+updates `Attachment` metadata. Existing objects are reused only when their
+bytes match exactly. A conflicting object or metadata record aborts instead of
+being replaced.
+
+The operation is idempotent. If a network or database failure leaves a verified
+object without metadata, rerunning the same command reuses that object and
+finishes reconciliation. It never modifies or deletes files in the legacy
+server directory.
+
 ## Stage 5 — work management
 
 The Stage 5 importer handles `tasks.json`, `events.json`, `approvals.json`, and `notifications.json`. Put these files in the same export directory used for the Stage 3 reference exports. Supplying `users.json`, `employees.json`, and `leads.json` lets the dry-run reject missing profile and lead relationships before a database connection is involved.

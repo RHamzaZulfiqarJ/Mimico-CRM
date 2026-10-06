@@ -68,5 +68,6 @@ The supporting organization/lead/creation-time index is installed by the
 
 - Run the dry-run-first Stage 4 importer and reconcile legacy leads,
   assignments, and follow-ups against a production export.
-- Transfer legacy lead images to the private Storage bucket and reconcile their attachment metadata.
+- Run the verified, no-overwrite Storage transfer against the reviewed Stage 4
+  manifest and reconcile its attachment metadata in production.
 - Run cross-role integration and acceptance tests against the connected Supabase/PostgreSQL environment.

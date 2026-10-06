@@ -16,7 +16,9 @@
 # local migration reports (may contain customer data)
 /migration-reports
 /.stage3-build-*
+/.stage4-build-*
 /.stage5-build-*
+/.storage-build-*
 
 # generated database client
 /src/generated/prisma
