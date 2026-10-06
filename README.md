@@ -38,6 +38,13 @@ npm run build
 After configuring `DIRECT_URL`, use `npm run db:validate` to validate the Prisma
 schema and `npm run db:generate` to generate the client.
 
+Before a production release, follow [the cutover runbook](docs/production-cutover.md)
+and run the read-only readiness gate:
+
+```bash
+npm run release:preflight -- --organization <organization-slug> --base-url https://crm.mimico.live
+```
+
 ## Migration boundary
 
 New work belongs in this directory. Do not import legacy client components or

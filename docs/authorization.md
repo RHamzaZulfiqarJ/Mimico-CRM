@@ -33,6 +33,11 @@ Prisma runs on the trusted server. Its database connection may use a role that b
 
 Never expose `DATABASE_URL`, `DIRECT_URL`, a service-role key, or Facebook secrets to client code. A publishable/anon key is expected in the browser because RLS is its security boundary.
 
+All application responses set anti-sniffing, anti-framing, strict referrer, and
+browser feature-permission headers. Production responses additionally enable
+HSTS. The release preflight verifies RLS is enabled and policies exist on every
+managed table; the role-by-role live cases below remain required before cutover.
+
 ## Identity rules
 
 - Supabase Auth is the only credential and password-recovery system.
