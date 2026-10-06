@@ -41,11 +41,14 @@ npm run release:performance -- --organization <organization-slug> --base-url htt
 ```
 
 It exercises database round trips plus the lead list, reminders, dashboard,
-tasks, cashbook, finance-list, and deployed-health workloads. The command stores
-only aggregate table counts and latency statistics; it does not store CRM rows
-or perform writes. Each database workload must remain below the configured p95
-threshold with zero errors. The health endpoint uses a minimum 1,000 ms p95
-threshold to include public network latency.
+tasks, cashbook, finance-list, and deployed-health workloads. PostgreSQL query
+workloads use server-reported `EXPLAIN ANALYZE` execution time so operator
+internet jitter cannot be mistaken for a slow query; database round-trip and
+HTTP probes retain wall-clock timing. The command stores only aggregate table
+counts and latency statistics; it does not store CRM rows or perform writes.
+Each workload must remain below the configured p95 threshold with zero errors.
+The health endpoint uses a minimum 1,000 ms p95 threshold to include public
+network latency.
 
 The tool warns when either leads or cashbook entries contain fewer than 1,000
 rows. Such a run proves connectivity and catches large regressions, but it is

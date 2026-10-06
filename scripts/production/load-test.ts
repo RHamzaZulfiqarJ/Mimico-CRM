@@ -154,13 +154,25 @@ const probes: Array<{ name: string; query: QueryConfig }> = [
   },
 ];
 
+async function serverExecutionTime(pool: Pool, query: QueryConfig, organizationId: string) {
+  const result = await pool.query<{ "QUERY PLAN": Array<{ "Execution Time": number }> }>({
+    text: `explain (analyze, format json) ${query.text}`,
+    values: [organizationId],
+  });
+  const duration = result.rows[0]?.["QUERY PLAN"]?.[0]?.["Execution Time"];
+  if (typeof duration !== "number" || !Number.isFinite(duration)) {
+    throw new Error("InvalidServerTiming");
+  }
+  return duration;
+}
+
 async function healthOperation(baseUrl: string) {
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/health`, {
     cache: "no-store",
     redirect: "error",
     signal: AbortSignal.timeout(8_000),
   });
-  if (!response.ok) throw new Error("Health endpoint failed.");
+  if (!response.ok) throw new Error(`HTTP_${response.status}`);
   const body = await response.json() as { status?: string };
   if (body.status !== "ok") throw new Error("Health endpoint returned an unexpected payload.");
 }
@@ -230,12 +242,16 @@ async function main() {
     ));
     const results: BenchmarkResult[] = [];
     for (const probe of probes) {
+      const isRoundTrip = probe.name === "database_round_trip";
       results.push(await runBenchmark({
         name: probe.name,
         iterations: arguments_.iterations,
         concurrency: arguments_.concurrency,
         thresholdMs: arguments_.thresholdMs,
-        operation: () => pool.query({ ...probe.query, values: [organizationId] }),
+        timingBasis: isRoundTrip ? "wall_clock" : "server_execution",
+        operation: isRoundTrip
+          ? () => pool.query({ ...probe.query, values: [organizationId] })
+          : () => serverExecutionTime(pool, probe.query, organizationId),
       }));
     }
     results.push(await runBenchmark({

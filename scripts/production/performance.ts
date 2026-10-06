@@ -2,8 +2,10 @@ import { performance } from "node:perf_hooks";
 
 export type BenchmarkResult = {
   name: string;
+  timingBasis: "server_execution" | "wall_clock";
   samples: number;
   errors: number;
+  errorKinds: Record<string, number>;
   p50Ms: number;
   p95Ms: number;
   maxMs: number;
@@ -17,6 +19,7 @@ export type BenchmarkOptions = {
   name: string;
   operation: () => Promise<unknown>;
   thresholdMs: number;
+  timingBasis?: "server_execution" | "wall_clock";
   warmup?: number;
 };
 
@@ -37,6 +40,7 @@ export async function runBenchmark(options: BenchmarkOptions): Promise<Benchmark
 
   const durations: number[] = [];
   let errors = 0;
+  const errorKinds: Record<string, number> = {};
   let cursor = 0;
   const workers = Array.from(
     { length: Math.min(options.concurrency, options.iterations) },
@@ -45,10 +49,20 @@ export async function runBenchmark(options: BenchmarkOptions): Promise<Benchmark
         cursor += 1;
         const startedAt = performance.now();
         try {
-          await options.operation();
-          durations.push(performance.now() - startedAt);
-        } catch {
+          const measurement = await options.operation();
+          durations.push(
+            options.timingBasis === "server_execution" && typeof measurement === "number"
+              ? measurement
+              : performance.now() - startedAt,
+          );
+        } catch (error) {
           errors += 1;
+          const kind = error instanceof Error && error.message.startsWith("HTTP_")
+            ? error.message
+            : error instanceof Error
+              ? error.name
+              : "UnknownError";
+          errorKinds[kind] = (errorKinds[kind] ?? 0) + 1;
         }
       }
     },
@@ -59,8 +73,10 @@ export async function runBenchmark(options: BenchmarkOptions): Promise<Benchmark
   const maxMs = rounded(durations.length ? Math.max(...durations) : 0);
   return {
     name: options.name,
+    timingBasis: options.timingBasis ?? "wall_clock",
     samples: durations.length,
     errors,
+    errorKinds,
     p50Ms,
     p95Ms,
     maxMs,

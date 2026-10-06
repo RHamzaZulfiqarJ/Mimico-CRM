@@ -20,7 +20,20 @@ describe("production performance benchmark", () => {
       operation: async () => { calls += 1; },
     });
     expect(calls).toBe(10);
-    expect(result).toMatchObject({ name: "fast", samples: 8, errors: 0, passed: true });
+    expect(result).toMatchObject({ name: "fast", timingBasis: "wall_clock", samples: 8, errors: 0, errorKinds: {}, passed: true });
+  });
+
+  it("uses an operation-provided server execution time", async () => {
+    const result = await runBenchmark({
+      name: "server",
+      iterations: 3,
+      concurrency: 1,
+      thresholdMs: 5,
+      timingBasis: "server_execution",
+      warmup: 0,
+      operation: async () => 2.5,
+    });
+    expect(result).toMatchObject({ timingBasis: "server_execution", p50Ms: 2.5, p95Ms: 2.5, passed: true });
   });
 
   it("fails a benchmark when an operation errors", async () => {
@@ -32,7 +45,7 @@ describe("production performance benchmark", () => {
       warmup: 0,
       operation: async () => { throw new Error("failure"); },
     });
-    expect(result).toMatchObject({ samples: 0, errors: 3, passed: false });
+    expect(result).toMatchObject({ samples: 0, errors: 3, errorKinds: { Error: 3 }, passed: false });
     expect(summarizeBenchmarks([result])).toMatchObject({ passed: 0, failed: 1 });
   });
 });
