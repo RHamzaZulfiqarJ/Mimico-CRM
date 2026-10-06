@@ -170,3 +170,54 @@ The importer maps the legacy split task fields into the normalized task lifecycl
 Apply mode is transactional and idempotent. Records are upserted using stable legacy identities, cross-organization identity collisions abort the transaction, and missing organization profiles, leads, or active management recipients prevent all writes. Repeating an apply updates the same records instead of creating duplicates.
 
 After applying, reconcile source counts against accepted and rejected records, review the expanded notification totals, confirm migrated timestamps in the application timezone, and test employee/manager visibility before treating PostgreSQL as the source of truth.
+
+## Stage 6 — finance and payroll
+
+Run Stage 3, Stage 4, and Stage 5 first so profiles, leads, projects, and legacy
+approvals are available for relationship reconciliation. The Stage 6 importer
+accepts `sales.json`, `cashbooks.json`, `vouchers.json`, `refunds.json`,
+`deductions.json`, and `transcripts.json`; singular filenames are also accepted.
+Keep `users.json`, `employees.json`, `leads.json`, `projects.json`, and
+`approvals.json` alongside them when available so the offline plan can validate
+every reference before opening a database connection.
+
+Export the finance collections from MongoDB, then create the dry-run report:
+
+```powershell
+mongoexport --uri $env:LEGACY_MONGODB_URI --collection sales --jsonArray --out C:\migration-input\sales.json
+mongoexport --uri $env:LEGACY_MONGODB_URI --collection cashbooks --jsonArray --out C:\migration-input\cashbooks.json
+mongoexport --uri $env:LEGACY_MONGODB_URI --collection vouchers --jsonArray --out C:\migration-input\vouchers.json
+mongoexport --uri $env:LEGACY_MONGODB_URI --collection refunds --jsonArray --out C:\migration-input\refunds.json
+mongoexport --uri $env:LEGACY_MONGODB_URI --collection deductions --jsonArray --out C:\migration-input\deductions.json
+mongoexport --uri $env:LEGACY_MONGODB_URI --collection transcripts --jsonArray --out C:\migration-input\transcripts.json
+npm run migrate:stage6 -- --input C:\migration-input --report C:\migration-output\stage6-dry-run.json
+```
+
+The report contains per-collection source and accepted counts plus exact decimal
+totals. Currency is parsed as text and accumulated as integer cents; JavaScript
+floating-point arithmetic is never used. The planner rejects invalid money,
+inconsistent sale profit or voucher balances, broken references, duplicate
+stable identities, and payroll conflicts. When a legacy payroll record stores a
+month name without a year, the importer infers the closest historical period
+from `createdAt` and records that decision as a warning for review.
+
+Resolve every rejection and review all totals and warnings before applying:
+
+```powershell
+npm run migrate:stage6 -- --input C:\migration-input --organization marcable --apply --report C:\migration-output\stage6-apply.json
+```
+
+Apply mode is transactional and idempotent. Finance records are upserted by
+their legacy MongoDB identities, cross-organization collisions abort all
+writes, and the importer recomputes database totals inside the same transaction
+before committing. Legacy voucher and refund approvals are reconnected to the
+new record UUIDs. If the old application did not create an approval row, a
+deterministic migration approval is created so pending decisions still use the
+normal audited workflow. Refund lead flags are recalculated from pending
+refunds; the importer does not create cashbook entries for already accepted
+legacy refunds because those entries are migrated from `cashbooks.json`.
+
+After apply, compare `sourceTotals`, `databaseTotals`, accepted counts, and
+rejected records in the report. Then verify representative sale calculations,
+cashbook balances, voucher/refund decisions, payroll periods, and printed
+voucher and salary documents before switching the finance source of truth.

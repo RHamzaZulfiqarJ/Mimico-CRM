@@ -98,7 +98,12 @@ the Data API.
 
 ## Remaining Stage 6 work
 
-- Import and reconcile legacy sales against MongoDB.
-- Import and reconcile legacy cashbook entries and balance totals.
-- Import and reconcile legacy vouchers, then verify printed documents.
-- Add live role/RLS acceptance tests and reconcile finance totals.
+- Run the dry-run-first Stage 6 importer against the production MongoDB exports,
+  resolve its report, and apply the reviewed plan to the target organization.
+- Reconcile the import report's exact source/database totals for sales,
+  cashbook, vouchers, refunds, deduction policies, and payroll transcripts.
+- Verify representative voucher and salary documents through browser print/Save
+  as PDF, and decide whether immutable generated documents need separate Storage
+  persistence.
+- Add live role/RLS acceptance tests for finance reads, mutations, approvals,
+  deletion, and cross-organization isolation.

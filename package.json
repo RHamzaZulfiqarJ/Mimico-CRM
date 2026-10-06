@@ -18,6 +18,7 @@
     "migrate:stage3": "node scripts/migration/run-stage3.mjs",
     "migrate:stage4": "node scripts/migration/run-stage4.mjs",
     "migrate:stage5": "node scripts/migration/run-stage5.mjs",
+    "migrate:stage6": "node scripts/migration/run-stage6.mjs",
     "migrate:storage": "node scripts/migration/run-storage.mjs",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
