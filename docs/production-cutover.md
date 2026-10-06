@@ -32,6 +32,31 @@ Warnings require review but do not fail the command. `--skip-http` is permitted
 only before the first deployment, and `--allow-local` is only for a local
 rehearsal. Keep every JSON report with the release evidence.
 
+## Read-only performance gate
+
+After deploying the candidate, run the bounded performance suite:
+
+```powershell
+npm run release:performance -- --organization <organization-slug> --base-url https://crm.mimico.live --concurrency 4 --iterations 20 --threshold-ms 750 --report C:\migration-output\production-performance.json
+```
+
+It exercises database round trips plus the lead list, reminders, dashboard,
+tasks, cashbook, finance-list, and deployed-health workloads. The command stores
+only aggregate table counts and latency statistics; it does not store CRM rows
+or perform writes. Each database workload must remain below the configured p95
+threshold with zero errors. The health endpoint uses a minimum 1,000 ms p95
+threshold to include public network latency.
+
+The tool warns when either leads or cashbook entries contain fewer than 1,000
+rows. Such a run proves connectivity and catches large regressions, but it is
+not evidence of production-scale performance. Repeat the same command after the
+full restore/migration rehearsal and retain both JSON reports.
+
+Server functions are pinned to Vercel `hnd1` because the current Supabase
+database endpoint is in AWS `ap-northeast-1`; both are Tokyo. Static content
+continues to use Vercel's global CDN. Re-run the performance gate after every
+region, database, pooling, or material query/index change.
+
 ## Independent backups
 
 Create and verify backups before every rehearsal and immediately before the

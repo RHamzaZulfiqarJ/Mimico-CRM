@@ -7,6 +7,7 @@ export function GET() {
     {
       service: "crm-mimico-live",
       status: "ok",
+      region: process.env.VERCEL_REGION ?? "local",
       timestamp: new Date().toISOString(),
     },
     {

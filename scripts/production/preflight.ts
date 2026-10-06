@@ -141,8 +141,8 @@ async function healthCheck(baseUrl: string | undefined, skip: boolean): Promise<
       redirect: "error",
       signal: AbortSignal.timeout(8_000),
     });
-    const payload = await response.json() as { status?: string };
-    return evaluateHealthEndpoint({ reachable: true, httpStatus: response.status, serviceStatus: payload.status });
+    const payload = await response.json() as { region?: string; status?: string };
+    return evaluateHealthEndpoint({ reachable: true, httpStatus: response.status, region: payload.region, serviceStatus: payload.status });
   } catch {
     return evaluateHealthEndpoint({ reachable: false });
   }

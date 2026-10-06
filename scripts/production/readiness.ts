@@ -209,12 +209,14 @@ export function evaluateStorageBucket(bucket: { exists: boolean; isPublic?: bool
   return check("storage.attachments", "pass", "The crm-attachments Storage bucket exists and is private.");
 }
 
-export function evaluateHealthEndpoint(result: { reachable: boolean; httpStatus?: number; serviceStatus?: string }): ReadinessCheck {
+export function evaluateHealthEndpoint(result: { reachable: boolean; httpStatus?: number; region?: string; serviceStatus?: string }): ReadinessCheck {
   const healthy = result.reachable && result.httpStatus === 200 && result.serviceStatus === "ok";
   return check(
     "deployment.health",
     healthy ? "pass" : "fail",
-    healthy ? "The deployed health endpoint is responding normally." : "The deployed health endpoint did not return the expected healthy response.",
+    healthy
+      ? `The deployed health endpoint is responding normally${result.region ? ` from ${result.region}` : ""}.`
+      : "The deployed health endpoint did not return the expected healthy response.",
   );
 }
 

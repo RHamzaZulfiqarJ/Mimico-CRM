@@ -43,6 +43,7 @@ and run the read-only readiness gate:
 
 ```bash
 npm run release:preflight -- --organization <organization-slug> --base-url https://crm.mimico.live
+npm run release:performance -- --organization <organization-slug> --base-url https://crm.mimico.live
 ```
 
 ## Migration boundary
