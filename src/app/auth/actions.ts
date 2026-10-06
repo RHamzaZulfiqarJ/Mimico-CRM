@@ -1,6 +1,7 @@
 "use server";
 
 import type { Route } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
@@ -11,6 +12,7 @@ import {
   updatePasswordSchema,
 } from "@/lib/auth/forms";
 import { getPublicEnvironment, hasSupabaseEnvironment } from "@/lib/env";
+import { resolveAuthRedirectOrigin } from "@/lib/auth/redirect-origin";
 import { createClient } from "@/lib/supabase/server";
 
 function configurationError(): AuthFormState {
@@ -72,12 +74,20 @@ export async function requestPasswordResetAction(
 
   const supabase = await createClient();
   const environment = getPublicEnvironment();
+  const requestHeaders = await headers();
+  const redirectOrigin = resolveAuthRedirectOrigin({
+    configuredUrl: environment.NEXT_PUBLIC_APP_URL,
+    origin: requestHeaders.get("origin"),
+    forwardedHost: requestHeaders.get("x-forwarded-host"),
+    forwardedProto: requestHeaders.get("x-forwarded-proto"),
+    host: requestHeaders.get("host"),
+  });
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
     {
       redirectTo: new URL(
         "/auth/complete/recovery",
-        environment.NEXT_PUBLIC_APP_URL,
+        redirectOrigin,
       ).toString(),
     },
   );

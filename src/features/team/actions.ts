@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import {
   canAssignRole,
@@ -11,6 +12,7 @@ import { getAuthContext } from "@/lib/auth/session";
 import { getDatabase } from "@/lib/database";
 import { getPublicEnvironment, hasAdminEnvironment } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveAuthRedirectOrigin } from "@/lib/auth/redirect-origin";
 import {
   inviteMemberSchema,
   membershipChangeSchema,
@@ -181,6 +183,14 @@ export async function inviteMemberAction(
 
   const admin = createAdminClient();
   const environment = getPublicEnvironment();
+  const requestHeaders = await headers();
+  const redirectOrigin = resolveAuthRedirectOrigin({
+    configuredUrl: environment.NEXT_PUBLIC_APP_URL,
+    origin: requestHeaders.get("origin"),
+    forwardedHost: requestHeaders.get("x-forwarded-host"),
+    forwardedProto: requestHeaders.get("x-forwarded-proto"),
+    host: requestHeaders.get("host"),
+  });
   const { data: invitation, error: invitationError } =
     await admin.auth.admin.inviteUserByEmail(parsed.data.email, {
       data: {
@@ -189,7 +199,7 @@ export async function inviteMemberAction(
       },
       redirectTo: new URL(
         "/auth/complete/invite",
-        environment.NEXT_PUBLIC_APP_URL,
+        redirectOrigin,
       ).toString(),
     });
 

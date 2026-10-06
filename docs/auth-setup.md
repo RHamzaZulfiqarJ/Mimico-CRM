@@ -15,7 +15,10 @@ The application uses email/password accounts, cookie-based SSR sessions, and ser
 ## Invitation and recovery links
 
 The application passes `/auth/complete/invite` or `/auth/complete/recovery` as
-the `redirectTo` URL. These browser completion pages support Supabase's default
+the `redirectTo` URL. It derives the origin from the validated incoming CRM
+request and uses `NEXT_PUBLIC_APP_URL` only as a fallback, preventing a stale
+deployment hostname from leaking into links created on the production domain.
+These browser completion pages support Supabase's default
 confirmation links (URL-fragment sessions), PKCE `code` callbacks, and custom
 `token_hash` links. They replace any existing browser session before sending
 the user to `/update-password`, which is important when an administrator opens

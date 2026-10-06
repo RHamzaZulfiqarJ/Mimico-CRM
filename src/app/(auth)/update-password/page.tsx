@@ -31,7 +31,7 @@ export default async function UpdatePasswordPage({
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-400">
           {invitation
-            ? "Finish activating your employee account with a password only you know."
+            ? "Finish activating your CRM account with a password only you know."
             : "Use a unique password with uppercase, lowercase, and numeric characters."}
         </p>
       </div>
