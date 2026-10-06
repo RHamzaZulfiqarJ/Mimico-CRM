@@ -75,6 +75,45 @@ Keep MongoDB as the source of truth until all of these checks pass:
 5. Copy and verify Storage objects from the manifest before enabling migrated image links.
 6. Test organization isolation and administrator workflows against the migrated data.
 
+## Stage 4 — leads and follow-ups
+
+The Stage 4 importer handles `leads.json` and `followups.json` (the camel-case
+`followUps.json` filename is also accepted). Keep `users.json`, `employees.json`,
+and `projects.json` in the same input directory when possible so the dry-run can
+validate clients, assignees, and projects without connecting to PostgreSQL.
+
+Run the offline reconciliation first:
+
+```powershell
+npm run migrate:stage4 -- --input C:\migration-input --report C:\migration-output\stage4-dry-run.json
+```
+
+The report maps lead stages and priorities, resolves relational assignments,
+reconnects follow-ups, and lists each legacy image in a deterministic private
+Storage manifest. Offset-less legacy `followUpDate` values are interpreted in
+`Asia/Karachi` (`UTC+05:00`) before being stored as UTC. The dry-run rejects
+broken project or assignee references, orphaned follow-ups, invalid dates,
+duplicate stable IDs, and duplicate active lead phone numbers.
+
+After resolving every rejection, apply the reviewed plan with the exact
+organization slug:
+
+```powershell
+npm run migrate:stage4 -- --input C:\migration-input --organization marcable --apply --report C:\migration-output\stage4-apply.json
+```
+
+Apply mode is transactional and idempotent. Leads and follow-ups are upserted by
+their legacy MongoDB IDs, assignments are inserted only when missing, and
+cross-organization ID collisions abort all writes. A missing legacy lead UID is
+replaced with the same stable UUID-based readable ID used by newly created
+leads. Re-running the importer does not remove assignments added later in the
+new CRM.
+
+The importer does not copy image bytes and does not create attachment metadata.
+Review `storageManifest`, copy each object into the private `crm-attachments`
+bucket, verify it, and only then create its matching `Attachment` record. The
+legacy files and MongoDB data are never changed by this command.
+
 ## Stage 5 — work management
 
 The Stage 5 importer handles `tasks.json`, `events.json`, `approvals.json`, and `notifications.json`. Put these files in the same export directory used for the Stage 3 reference exports. Supplying `users.json`, `employees.json`, and `leads.json` lets the dry-run reject missing profile and lead relationships before a database connection is involved.
