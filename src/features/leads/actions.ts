@@ -7,6 +7,7 @@ import {
   assignmentSchema,
   createLeadSchema,
   followUpSchema,
+  leadStages,
   type LeadFormState,
   updateLeadSchema,
 } from "@/features/leads/schemas";
@@ -261,6 +262,70 @@ export async function updateLeadAction(
   revalidatePath("/leads");
   revalidatePath(`/leads/${leadId}`);
   return { status: "success", message: "Lead updated." };
+}
+
+export async function moveLeadStageAction(
+  leadId: string,
+  stage: string,
+): Promise<LeadFormState> {
+  if (!leadStages.includes(stage as (typeof leadStages)[number])) {
+    return { status: "error", message: "Select a valid lead stage." };
+  }
+
+  const auth = await getAuthContext();
+  if (!auth || !isStaff(auth.membership.role)) return unauthorizedState();
+
+  try {
+    const database = getDatabase();
+    const result = await database.$transaction(async (transaction) => {
+      const lead = await transaction.lead.findFirst({
+        where: {
+          id: leadId,
+          organizationId: auth.organization.id,
+          isArchived: false,
+          ...employeeLeadAccess(auth.membership.role, auth.profile.id),
+        },
+        select: { id: true, stage: true },
+      });
+      if (!lead) return "missing" as const;
+      if (lead.stage === stage) return "unchanged" as const;
+
+      const moved = await transaction.lead.updateMany({
+        where: {
+          id: lead.id,
+          organizationId: auth.organization.id,
+          isArchived: false,
+          stage: lead.stage,
+          ...employeeLeadAccess(auth.membership.role, auth.profile.id),
+        },
+        data: { stage: stage as (typeof leadStages)[number] },
+      });
+      if (moved.count !== 1) return "conflict" as const;
+
+      await transaction.auditLog.create({
+        data: {
+          organizationId: auth.organization.id,
+          actorProfileId: auth.profile.id,
+          action: "lead.stage_changed",
+          entityType: "Lead",
+          entityId: lead.id,
+          metadata: { from: lead.stage, to: stage },
+        },
+      });
+      return "moved" as const;
+    });
+
+    if (result === "missing") return unauthorizedState();
+    if (result === "conflict") {
+      return { status: "error", message: "This lead changed while you were moving it. Refresh and try again." };
+    }
+  } catch {
+    return databaseErrorState();
+  }
+
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${leadId}`);
+  return { status: "success", message: "Lead stage updated." };
 }
 
 export async function createFollowUpAction(

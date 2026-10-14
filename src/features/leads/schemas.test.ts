@@ -90,7 +90,12 @@ describe("lead schemas", () => {
         projectId: "invalid",
         archived: "false",
       }),
-    ).toEqual({ query: "ali", priority: "HOT", page: 1 });
+    ).toEqual({ query: "ali", priority: "HOT", view: "list", page: 1 });
+  });
+
+  it("accepts the Kanban view and falls back from invalid view parameters", () => {
+    expect(leadFiltersSchema.parse({ view: "board" }).view).toBe("board");
+    expect(leadFiltersSchema.parse({ view: "unknown" }).view).toBe("list");
   });
 
   it("accepts only the explicit archived view", () => {

@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Filter,
   List,
+  LayoutGrid,
   MoreVertical,
   RefreshCw,
   RotateCcw,
@@ -15,6 +16,7 @@ import { redirect } from "next/navigation";
 
 import { LeadCreateDialog } from "@/components/leads/lead-forms";
 import { LeadImportDialog } from "@/components/leads/lead-import-dialog";
+import { LeadKanban } from "@/components/leads/lead-kanban";
 import { ClientRecords } from "@/components/client/client-records";
 import { restoreLeadAction } from "@/features/leads/actions";
 import { displayLeadUid } from "@/features/leads/identifiers";
@@ -60,7 +62,7 @@ const toolbarButton = "flex size-10 shrink-0 items-center justify-center rounded
 
 export default async function LeadsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const raw = await searchParams;
-  const data = await getLeadWorkspace({ query: first(raw.query), stage: first(raw.stage), priority: first(raw.priority), projectId: first(raw.projectId), archived: first(raw.archived), page: first(raw.page) });
+  const data = await getLeadWorkspace({ query: first(raw.query), view: first(raw.view), stage: first(raw.stage), priority: first(raw.priority), projectId: first(raw.projectId), archived: first(raw.archived), page: first(raw.page) });
   if (!data) redirect("/access-pending");
 
   if (data.auth.membership.role === "CLIENT") return <ClientRecords data={data} />;
@@ -70,6 +72,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   const activeFilterCount = [data.filters.stage, data.filters.priority, data.filters.projectId].filter(Boolean).length;
   const pageHref = (page: number) => {
     const query: Record<string, string> = {};
+    if (data.filters.view === "board") query.view = "board";
     if (data.filters.query) query.query = data.filters.query;
     if (data.filters.stage) query.stage = data.filters.stage;
     if (data.filters.priority) query.priority = data.filters.priority;
@@ -78,6 +81,21 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     if (page > 1) query.page = String(page);
     return { pathname: "/leads" as const, query };
   };
+  const viewHref = (view: "list" | "board") => ({
+    pathname: "/leads" as const,
+    query: { ...pageHref(1).query, view },
+  });
+  const boardLeads = data.leads.map((lead) => ({
+    id: lead.id,
+    uid: displayLeadUid(lead.uid, lead.id),
+    clientName: lead.clientName ?? "Unnamed lead",
+    clientPhone: lead.clientPhone,
+    priority: lead.priority,
+    stage: lead.stage,
+    project: lead.project?.title ?? null,
+    staff: lead.assignments.map(({ profile }) => personLabel(profile)).join(", ") || "Unassigned",
+    created: lead.createdAt.toLocaleDateString("en-GB"),
+  }));
   const firstResult = data.leads.length
     ? (data.pagination.page - 1) * data.pagination.pageSize + 1
     : 0;
@@ -97,24 +115,32 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           <form action="/leads" className="relative w-full sm:w-56">
             {data.filters.archived ? <input type="hidden" name="archived" value="true" /> : null}
+            <input type="hidden" name="view" value={data.filters.view} />
+            {data.filters.stage ? <input type="hidden" name="stage" value={data.filters.stage} /> : null}
+            {data.filters.priority ? <input type="hidden" name="priority" value={data.filters.priority} /> : null}
+            {data.filters.projectId ? <input type="hidden" name="projectId" value={data.filters.projectId} /> : null}
             <Search className="pointer-events-none absolute left-2 top-2.5 size-5 text-[#a6b5bd]" />
             <input name="query" aria-label="Search leads" defaultValue={data.filters.query} placeholder="Search leads" className="h-10 w-full rounded-md bg-[#ebf2f5] pl-9 pr-2 text-sm text-gray-700 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#20aee3]/25" />
           </form>
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:overflow-visible sm:pb-0">
-          <Link href={data.filters.archived ? "/leads?archived=true" : "/leads"} aria-label="Refresh leads" title="Refresh" className={toolbarButton}><RefreshCw className="size-5" /></Link>
+          <Link href={pageHref(data.pagination.page)} aria-label="Refresh leads" title="Refresh" className={toolbarButton}><RefreshCw className="size-5" /></Link>
           {canManageOrganization(data.auth.membership.role) ? <Link href={data.filters.archived ? "/leads" : "/leads?archived=true"} aria-label={data.filters.archived ? "Active leads" : "Archived leads"} title={data.filters.archived ? "Active leads" : "Archived leads"} className={`${toolbarButton} ${data.filters.archived ? "bg-sky-50 text-[#20aee3]" : ""}`}>{data.filters.archived ? <RotateCcw className="size-5" /> : <Archive className="size-5" />}</Link> : null}
           <Link href="/leads/facebook" aria-label="Facebook leads" title="Facebook leads" className={toolbarButton}><span className="text-lg font-semibold">f</span></Link>
-          <button disabled aria-label="Change lead view, coming soon" title="Additional views are coming soon" className={toolbarButton}><List className="size-5" /></button>
+          <div className="flex items-center gap-1" role="group" aria-label="Lead view">
+            <Link href={viewHref("list")} aria-label="List view" aria-current={data.filters.view === "list" ? "page" : undefined} title="List view" className={`${toolbarButton} ${data.filters.view === "list" ? "bg-sky-50 text-[#20aee3]" : ""}`}><List className="size-5" /></Link>
+            <Link href={viewHref("board")} aria-label="Kanban view" aria-current={data.filters.view === "board" ? "page" : undefined} title="Kanban view" className={`${toolbarButton} ${data.filters.view === "board" ? "bg-sky-50 text-[#20aee3]" : ""}`}><LayoutGrid className="size-5" /></Link>
+          </div>
           <details className="relative shrink-0">
             <summary aria-label="Filter leads" title="Filter leads" className={`${toolbarButton} relative list-none cursor-pointer`}><Filter className="size-5" />{activeFilterCount ? <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-[#ff5c6c] text-[9px] font-semibold text-white">{activeFilterCount}</span> : null}</summary>
             <form action="/leads" className="dialog-enter fixed left-3 right-3 top-20 z-50 grid gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72">
               <div className="flex items-center justify-between"><p className="text-sm font-medium text-gray-700">Filter leads</p>{activeFilterCount ? <span className="text-xs text-[#20aee3]">{activeFilterCount} active</span> : null}</div>
               <input type="hidden" name="query" value={data.filters.query ?? ""} />
+              <input type="hidden" name="view" value={data.filters.view} />
               {data.filters.archived ? <input type="hidden" name="archived" value="true" /> : null}
               <select name="stage" defaultValue={data.filters.stage ?? ""} className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="">All statuses</option>{leadStages.map((stage) => <option key={stage} value={stage}>{stageLabels[stage]}</option>)}</select>
               <select name="priority" defaultValue={data.filters.priority ?? ""} className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="">All priorities</option>{leadPriorities.map((priority) => <option key={priority} value={priority}>{priorityLabels[priority]}</option>)}</select>
               <select name="projectId" defaultValue={data.filters.projectId ?? ""} className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="">All projects</option>{data.projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}</select>
-              <div className="flex justify-end gap-2"><Link href={data.filters.archived ? "/leads?archived=true" : "/leads"} className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50">Clear</Link><button className="rounded-md bg-[#20aee3] px-3 py-2 text-sm text-white transition hover:bg-[#179bd0]">Apply</button></div>
+              <div className="flex justify-end gap-2"><Link href={{ pathname: "/leads", query: { view: data.filters.view, ...(data.filters.archived ? { archived: "true" } : {}) } }} className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50">Clear</Link><button className="rounded-md bg-[#20aee3] px-3 py-2 text-sm text-white transition hover:bg-[#179bd0]">Apply</button></div>
             </form>
           </details>
           {!data.filters.archived && canCreateLead(data.auth.membership.role) ? <Link href="/leads/reminders" aria-label="Call reminders" title="Call reminders" className={toolbarButton}><BellRing className="size-5" /></Link> : null}
@@ -127,6 +153,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       {data.filters.archived && first(raw.error) === "duplicate-phone" ? <p role="alert" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">This lead cannot be restored because an active lead already uses the same phone number.</p> : null}
 
       <section className="surface-card overflow-hidden rounded-lg p-3 sm:p-[15px]">
+        {data.filters.view === "board" ? <LeadKanban key={data.leads.map((lead) => `${lead.id}:${lead.updatedAt.getTime()}`).join("|")} leads={boardLeads} archived={data.filters.archived} /> : <>
         <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[980px] border-collapse text-left text-sm font-light text-gray-700">
             <thead>
@@ -168,6 +195,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
             </article>
           ))}
         </div>
+        </>}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-1 pt-4 text-xs text-gray-500">
           <span>Showing {firstResult}–{lastResult}</span>
           <div className="flex items-center gap-2">

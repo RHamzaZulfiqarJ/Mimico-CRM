@@ -79,6 +79,7 @@ export const assignmentSchema = z.object({
 
 export const leadFiltersSchema = z.object({
   query: z.string().trim().max(120).optional().catch(undefined),
+  view: z.enum(["list", "board"]).catch("list"),
   stage: z.enum(leadStages).optional().catch(undefined),
   priority: z.enum(leadPriorities).optional().catch(undefined),
   projectId: z.uuid().optional().catch(undefined),

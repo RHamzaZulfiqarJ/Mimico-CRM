@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f6f9fa;
   --foreground: #67757c;
@@ -7,6 +9,15 @@
   --accent: #ff5c6c;
   --surface: #ffffff;
   --border: #e8eef1;
+}
+
+:root.dark {
+  --background: #0b1120;
+  --foreground: #cbd5e1;
+  --brand: #38bdf8;
+  --accent: #fb7185;
+  --surface: #111827;
+  --border: #29364a;
 }
 
 @theme inline {
@@ -103,6 +114,223 @@ button:disabled,
   transform: translateY(-2px);
 }
 
+.dark body,
+.dark [class~="bg-[#f6f9fa]"],
+.dark [class~="bg-[#f4f2ed]"] {
+  background-color: #0b1120;
+  color: #cbd5e1;
+}
+
+.dark [class~="bg-white"],
+.dark [class~="bg-white/95"],
+.dark [class~="bg-[#f4f2ed]/95"],
+.dark [class~="bg-[#fbfdfe]"],
+.dark [class~="bg-[#f8fbfc]"],
+.dark [class~="bg-[#f4fafc]"] {
+  background-color: #111827;
+}
+
+.dark [class~="bg-gray-50"],
+.dark [class~="bg-gray-100"],
+.dark [class~="bg-slate-50"],
+.dark [class~="bg-slate-50/60"],
+.dark [class~="bg-slate-50/70"],
+.dark [class~="bg-slate-100"],
+.dark [class~="bg-slate-200"],
+.dark [class~="bg-gray-300"],
+.dark [class~="bg-[#ebf2f5]"],
+.dark [class~="bg-[#edf3f5]"],
+.dark [class~="bg-[#dfe6e8]"] {
+  background-color: #172033;
+}
+
+.dark [class~="bg-sky-50"],
+.dark [class~="bg-sky-50/20"],
+.dark [class~="bg-sky-50/40"],
+.dark [class~="bg-sky-50/45"],
+.dark [class~="bg-sky-50/50"],
+.dark [class~="bg-sky-50/60"],
+.dark [class~="bg-sky-50/70"],
+.dark [class~="bg-sky-100"] {
+  background-color: #0c2b3d;
+}
+
+.dark [class~="bg-sky-200/20"],
+.dark [class~="bg-cyan-100/30"] {
+  background-color: rgb(14 116 144 / 0.16);
+}
+
+.dark [class~="bg-emerald-50"],
+.dark [class~="bg-emerald-100"] {
+  background-color: #0d2e27;
+}
+
+.dark [class~="bg-amber-50"],
+.dark [class~="bg-amber-50/60"],
+.dark [class~="bg-amber-100"] {
+  background-color: #33240d;
+}
+
+.dark [class~="bg-rose-50"],
+.dark [class~="bg-rose-100"] {
+  background-color: #35151f;
+}
+
+.dark [class~="text-gray-700"],
+.dark [class~="text-slate-700"],
+.dark [class~="text-slate-800"],
+.dark [class~="text-slate-900"],
+.dark [class~="text-slate-950"],
+.dark [class~="text-stone-700"],
+.dark [class~="text-[#455a64]"] {
+  color: #e5e7eb;
+}
+
+.dark [class~="text-gray-500"],
+.dark [class~="text-gray-600"],
+.dark [class~="text-slate-500"],
+.dark [class~="text-slate-600"],
+.dark [class~="text-stone-500"],
+.dark [class~="text-stone-600"],
+.dark [class~="text-[#67757c]"],
+.dark [class~="text-[#82949d]"] {
+  color: #cbd5e1;
+}
+
+.dark [class~="text-gray-300"],
+.dark [class~="text-gray-400"],
+.dark [class~="text-slate-400"],
+.dark [class~="text-stone-400"],
+.dark [class~="text-[#a6b5bd]"] {
+  color: #94a3b8;
+}
+
+.dark [class~="text-sky-700"],
+.dark [class~="text-sky-800"],
+.dark [class~="text-[#007bff]"] {
+  color: #7dd3fc;
+}
+
+.dark [class~="text-emerald-700"],
+.dark [class~="text-emerald-800"] {
+  color: #6ee7b7;
+}
+
+.dark [class~="text-amber-700"],
+.dark [class~="text-amber-800"] {
+  color: #fcd34d;
+}
+
+.dark [class~="text-rose-600"],
+.dark [class~="text-rose-700"] {
+  color: #fda4af;
+}
+
+.dark [class~="border-gray-100"],
+.dark [class~="border-gray-200"],
+.dark [class~="border-gray-300"],
+.dark [class~="border-slate-200"],
+.dark [class~="border-slate-300"],
+.dark [class~="border-stone-200"],
+.dark [class~="border-stone-300"],
+.dark [class~="border-stone-400"],
+.dark [class~="border-[#eeeff0]"] {
+  border-color: #334155;
+}
+
+.dark [class~="border-sky-100"],
+.dark [class~="border-sky-200"],
+.dark [class~="border-sky-300"] {
+  border-color: #155e75;
+}
+
+.dark [class~="border-emerald-100"],
+.dark [class~="border-emerald-200"],
+.dark [class~="border-emerald-300"] {
+  border-color: #166534;
+}
+
+.dark [class~="border-amber-100"],
+.dark [class~="border-amber-200"],
+.dark [class~="border-amber-300"] {
+  border-color: #854d0e;
+}
+
+.dark [class~="border-rose-100"],
+.dark [class~="border-rose-200"],
+.dark [class~="border-rose-300"] {
+  border-color: #9f1239;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  border-color: #334155;
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:hover {
+  box-shadow: 0 0 0 1000px #0f172a inset;
+  -webkit-text-fill-color: #e5e7eb;
+}
+
+.dark [class~="hover:bg-gray-50"]:hover,
+.dark [class~="hover:bg-white"]:hover,
+.dark [class~="hover:bg-gray-100"]:hover,
+.dark [class~="hover:bg-slate-50"]:hover,
+.dark [class~="hover:bg-[#f8fbfc]"]:hover,
+.dark [class~="hover:bg-[#f4fafc]"]:hover,
+.dark [class~="hover:bg-[#ebf2f5]"]:hover,
+.dark [class~="hover:bg-[#dfe6e8]"]:hover {
+  background-color: #1e293b;
+}
+
+.dark [class~="hover:bg-sky-50"]:hover {
+  background-color: #0c2b3d;
+}
+
+.dark [class~="hover:bg-rose-50"]:hover {
+  background-color: #35151f;
+}
+
+.dark [class~="focus:bg-white"]:focus {
+  background-color: #0f172a;
+}
+
+.dark [class~="disabled:bg-gray-300"]:disabled {
+  background-color: #475569;
+}
+
+.dark .theme-logo {
+  filter: brightness(0) invert(1);
+  opacity: 0.94;
+}
+
+.dark .theme-illustration {
+  filter: brightness(0.7) saturate(0.75);
+  opacity: 0.65;
+}
+
+.dark .surface-card-interactive:hover {
+  box-shadow: 0 12px 34px rgb(0 0 0 / 0.3);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0b1120;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -130,5 +358,28 @@ a {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .theme-toggle {
+    display: none !important;
+  }
+
+  .dark body,
+  .dark [class~="bg-white"],
+  .dark [class~="print:bg-white"] {
+    background: white !important;
+    color: #1e293b !important;
+  }
+
+  .dark [class~="text-slate-800"],
+  .dark [class~="text-slate-900"] {
+    color: #1e293b !important;
+  }
+
+  .dark .theme-logo {
+    filter: none;
+    opacity: 1;
   }
 }

@@ -57,7 +57,7 @@ export function AppShell({ auth, children }: { auth: AuthContext; children: Reac
         <header className="sticky top-0 z-30 border-b border-stone-300 bg-[#f4f2ed]/95 backdrop-blur">
           <div className="mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6 lg:px-8">
             <Link href="/dashboard" className="shrink-0">
-              <Image src="/images/Logo.png" alt="mimico" width={2172} height={724} className="h-auto w-32 object-contain" priority />
+              <Image src="/images/Logo.png" alt="mimico" width={2172} height={724} className="theme-logo h-auto w-32 object-contain" priority />
             </Link>
             <nav className="order-3 flex w-full items-center gap-6 border-t border-stone-300 pt-3 text-sm sm:order-none sm:w-auto sm:border-0 sm:pt-0" aria-label="Client portal">
               <Link href="/dashboard" className="inline-flex items-center gap-2 font-medium text-slate-700 transition hover:text-slate-950"><LayoutDashboard className="size-4" />Overview</Link>
@@ -99,7 +99,7 @@ export function AppShell({ auth, children }: { auth: AuthContext; children: Reac
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-[min(82vw,240px)] flex-col border-r border-[#eeeff0] bg-white shadow-2xl transition-transform duration-300 ease-out md:sticky md:top-0 md:h-screen md:w-[220px] md:translate-x-0 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#eeeff0] px-4">
           <Link href="/dashboard" onClick={() => setSidebarOpen(false)} className="flex flex-1 justify-center">
-            <Image src="/images/Logo.png" alt="mimico" width={2172} height={724} className="h-auto w-36 object-contain" priority />
+            <Image src="/images/Logo.png" alt="mimico" width={2172} height={724} className="theme-logo h-auto w-36 object-contain" priority />
           </Link>
           <button type="button" onClick={() => setSidebarOpen(false)} className="rounded-md p-2 text-slate-500 transition hover:bg-slate-50 hover:text-[#20aee3] md:hidden" aria-label="Close navigation"><X className="size-5" /></button>
         </div>

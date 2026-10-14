@@ -14,6 +14,7 @@ function accessWhere(auth: AuthContext) {
 
 export async function getLeadWorkspace(rawFilters: {
   query?: string;
+  view?: string;
   stage?: string;
   priority?: string;
   projectId?: string;
