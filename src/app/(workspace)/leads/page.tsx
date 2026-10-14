@@ -81,10 +81,12 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     if (page > 1) query.page = String(page);
     return { pathname: "/leads" as const, query };
   };
-  const viewHref = (view: "list" | "board") => ({
-    pathname: "/leads" as const,
-    query: { ...pageHref(1).query, view },
-  });
+  const viewHref = (view: "list" | "board") => {
+    const query = pageHref(1).query;
+    delete query.view;
+    if (view === "board") query.view = "board";
+    return { pathname: "/leads" as const, query };
+  };
   const boardLeads = data.leads.map((lead) => ({
     id: lead.id,
     uid: displayLeadUid(lead.uid, lead.id),
@@ -126,10 +128,16 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           <Link href={pageHref(data.pagination.page)} aria-label="Refresh leads" title="Refresh" className={toolbarButton}><RefreshCw className="size-5" /></Link>
           {canManageOrganization(data.auth.membership.role) ? <Link href={data.filters.archived ? "/leads" : "/leads?archived=true"} aria-label={data.filters.archived ? "Active leads" : "Archived leads"} title={data.filters.archived ? "Active leads" : "Archived leads"} className={`${toolbarButton} ${data.filters.archived ? "bg-sky-50 text-[#20aee3]" : ""}`}>{data.filters.archived ? <RotateCcw className="size-5" /> : <Archive className="size-5" />}</Link> : null}
           <Link href="/leads/facebook" aria-label="Facebook leads" title="Facebook leads" className={toolbarButton}><span className="text-lg font-semibold">f</span></Link>
-          <div className="flex items-center gap-1" role="group" aria-label="Lead view">
-            <Link href={viewHref("list")} aria-label="List view" aria-current={data.filters.view === "list" ? "page" : undefined} title="List view" className={`${toolbarButton} ${data.filters.view === "list" ? "bg-sky-50 text-[#20aee3]" : ""}`}><List className="size-5" /></Link>
-            <Link href={viewHref("board")} aria-label="Kanban view" aria-current={data.filters.view === "board" ? "page" : undefined} title="Kanban view" className={`${toolbarButton} ${data.filters.view === "board" ? "bg-sky-50 text-[#20aee3]" : ""}`}><LayoutGrid className="size-5" /></Link>
-          </div>
+          <Link
+            href={viewHref(data.filters.view === "board" ? "list" : "board")}
+            role="button"
+            aria-pressed={data.filters.view === "board"}
+            aria-label={data.filters.view === "board" ? "Switch to list view" : "Switch to Kanban view"}
+            title={data.filters.view === "board" ? "Switch to list view" : "Switch to Kanban view"}
+            className={`${toolbarButton} ${data.filters.view === "board" ? "bg-sky-50 text-[#20aee3] ring-1 ring-sky-200" : ""}`}
+          >
+            {data.filters.view === "board" ? <List className="size-5" /> : <LayoutGrid className="size-5" />}
+          </Link>
           <details className="relative shrink-0">
             <summary aria-label="Filter leads" title="Filter leads" className={`${toolbarButton} relative list-none cursor-pointer`}><Filter className="size-5" />{activeFilterCount ? <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-[#ff5c6c] text-[9px] font-semibold text-white">{activeFilterCount}</span> : null}</summary>
             <form action="/leads" className="dialog-enter fixed left-3 right-3 top-20 z-50 grid gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72">
