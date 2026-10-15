@@ -54,6 +54,7 @@ export const updateTaskStatusSchema = z
 
 export const taskFiltersSchema = z.object({
   query: optionalText(120),
+  view: z.enum(["list", "board"]).catch("list"),
   status: z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
     taskStatusSchema.optional(),

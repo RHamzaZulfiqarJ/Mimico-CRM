@@ -53,4 +53,10 @@ describe("task schemas", () => {
   it("rejects unsupported task filters", () => {
     expect(taskFiltersSchema.safeParse({ status: "BLOCKED" }).success).toBe(false);
   });
+
+  it("defaults task views to list and accepts the board view", () => {
+    expect(taskFiltersSchema.parse({}).view).toBe("list");
+    expect(taskFiltersSchema.parse({ view: "board" }).view).toBe("board");
+    expect(taskFiltersSchema.parse({ view: "unsupported" }).view).toBe("list");
+  });
 });

@@ -26,6 +26,7 @@ const personSelect = {
 
 export async function getTaskWorkspace(rawFilters: {
   query?: string;
+  view?: string;
   status?: string;
   assignedProfileId?: string;
 }) {
