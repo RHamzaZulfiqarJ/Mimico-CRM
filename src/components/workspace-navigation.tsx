@@ -45,7 +45,7 @@ export function WorkspaceNavigation({ role, onNavigate }: NavigationProps) {
   const pathname = usePathname();
   const [openGroup, setOpenGroup] = useState<string | null>(() => {
     if (pathname.startsWith("/team") || pathname.startsWith("/clients")) return "User";
-    if (pathname.startsWith("/reference-data")) return "Inventory";
+    if (pathname.startsWith("/reference-data") || pathname.startsWith("/inventory")) return "Inventory";
     if ((pathname.startsWith("/approvals") || pathname.startsWith("/refunds")) && (role === "MANAGER" || role === "SUPER_ADMIN")) return "Authorization";
     if (pathname.startsWith("/cashbook")) return "Cash Book";
     return null;
@@ -77,9 +77,9 @@ export function WorkspaceNavigation({ role, onNavigate }: NavigationProps) {
         <NavigationGroup name="Inventory" icon={Warehouse} open={openGroup === "Inventory"} onToggle={() => setOpenGroup(openGroup === "Inventory" ? null : "Inventory")}>
           <Link href="/reference-data#societies" onClick={onNavigate} className={linkClass(false)}><FolderKanban className="size-[22px] stroke-[1.4]" />Societies</Link>
           <Link href="/reference-data#projects" onClick={onNavigate} className={linkClass(false)}><FolderKanban className="size-[22px] stroke-[1.4]" />Projects</Link>
-          <Link href="/reference-data#inventories" onClick={onNavigate} className={linkClass(false)}><Warehouse className="size-[22px] stroke-[1.4]" />Inventories</Link>
+          <Link href="/inventory" onClick={onNavigate} className={linkClass(pathname.startsWith("/inventory"))}><Warehouse className="size-[22px] stroke-[1.4]" />Inventories</Link>
         </NavigationGroup>
-      ) : <Link href="/reference-data" onClick={onNavigate} className={linkClass(pathname.startsWith("/reference-data"))}><Warehouse className="size-[22px] stroke-[1.4]" />Inventories</Link>}
+      ) : <Link href="/inventory" onClick={onNavigate} className={linkClass(pathname.startsWith("/inventory"))}><Warehouse className="size-[22px] stroke-[1.4]" />Inventories</Link>}
       {staff ? <Link href="/sales" aria-current={pathname.startsWith("/sales") ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname.startsWith("/sales"))}><ShoppingCart className="size-[21px] stroke-[1.4] transition-transform group-hover:scale-105" />Sales</Link> : null}
       {management ? <Link href="/payroll" aria-current={pathname.startsWith("/payroll") ? "page" : undefined} onClick={onNavigate} className={linkClass(pathname.startsWith("/payroll"))}><FileText className="size-[21px] stroke-[1.4] transition-transform group-hover:scale-105" />Transcript</Link> : null}
       {staff ? <NavigationGroup name="Cash Book" icon={Banknote} open={openGroup === "Cash Book"} onToggle={() => setOpenGroup(openGroup === "Cash Book" ? null : "Cash Book")}><Link href="/cashbook" onClick={onNavigate} className={linkClass(pathname.startsWith("/cashbook"))}><CircleDollarSign className="size-[22px] stroke-[1.4]" />All Cash Book</Link><Link href={{ pathname: "/cashbook", hash: "filters" }} onClick={onNavigate} className={linkClass(false)}><ClipboardCheck className="size-[22px] stroke-[1.4]" />View Cash Book</Link></NavigationGroup> : null}

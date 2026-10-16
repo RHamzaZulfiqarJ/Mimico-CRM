@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   inventorySchema,
+  inventoryFiltersSchema,
   projectSchema,
   societySchema,
 } from "@/features/reference-data/schemas";
@@ -64,4 +65,14 @@ describe("reference data schemas", () => {
       ).toBe(false);
     },
   );
+
+  it("defaults inventory views to list and validates inventory filters", () => {
+    expect(inventoryFiltersSchema.parse({}).view).toBe("list");
+    expect(inventoryFiltersSchema.parse({ view: "board", status: "SOLD" })).toMatchObject({
+      view: "board",
+      status: "SOLD",
+    });
+    expect(inventoryFiltersSchema.safeParse({ status: "RESERVED" }).success).toBe(false);
+    expect(inventoryFiltersSchema.parse({ view: "unsupported" }).view).toBe("list");
+  });
 });

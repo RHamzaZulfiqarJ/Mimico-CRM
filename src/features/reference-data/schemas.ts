@@ -30,6 +30,15 @@ const optionalPrice = z.preprocess(
     .optional(),
 );
 
+export const inventoryStatuses = ["UNSOLD", "UNDER_PROCESS", "SOLD"] as const;
+export const inventoryStatusSchema = z.enum(inventoryStatuses);
+
+export const inventoryStatusLabels: Record<(typeof inventoryStatuses)[number], string> = {
+  UNSOLD: "Unsold",
+  UNDER_PROCESS: "Under process",
+  SOLD: "Sold",
+};
+
 export const societySchema = z.object({
   title: requiredText("Title", 120),
   description: requiredText("Description", 2_000),
@@ -61,7 +70,21 @@ export const inventorySchema = z.object({
   propertyNumber: optionalText(100),
   price: optionalPrice,
   remarks: optionalText(2_000),
-  status: z.enum(["SOLD", "UNSOLD", "UNDER_PROCESS"]),
+  status: inventoryStatusSchema,
+});
+
+export const inventoryFiltersSchema = z.object({
+  query: optionalText(120),
+  view: z.enum(["list", "board"]).catch("list"),
+  status: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    inventoryStatusSchema.optional(),
+  ),
+  projectId: optionalUuid,
+});
+
+export const updateInventoryStatusSchema = z.object({
+  status: inventoryStatusSchema,
 });
 
 export type ReferenceFormState = {

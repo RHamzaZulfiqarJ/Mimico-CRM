@@ -11,6 +11,7 @@ import { getAuthContext } from "@/lib/auth/session";
 import { getDatabase } from "@/lib/database";
 import {
   inventorySchema,
+  updateInventoryStatusSchema,
   projectSchema,
   type ReferenceFormState,
   societySchema,
@@ -242,7 +243,60 @@ export async function createInventoryAction(
   }
 
   revalidatePath("/reference-data");
+  revalidatePath("/inventory");
   return { status: "success", message: "Inventory record created." };
+}
+
+export async function updateInventoryStatusAction(
+  inventoryId: string,
+  status: string,
+): Promise<ReferenceFormState> {
+  const parsed = updateInventoryStatusSchema.safeParse({ status });
+  if (!parsed.success) {
+    return { status: "error", message: "Choose a valid inventory status." };
+  }
+
+  const auth = await getAuthContext();
+  if (!auth || !isStaff(auth.membership.role)) return unauthorizedState();
+
+  try {
+    const database = getDatabase();
+    await database.$transaction(async (transaction) => {
+      const inventory = await transaction.inventory.findFirst({
+        where: {
+          id: inventoryId,
+          organizationId: auth.organization.id,
+          isArchived: false,
+        },
+        select: { id: true, status: true },
+      });
+      if (!inventory) throw new Error("INVENTORY_NOT_FOUND");
+
+      await transaction.inventory.update({
+        where: { id: inventory.id },
+        data: { status: parsed.data.status },
+      });
+      await transaction.auditLog.create({
+        data: {
+          organizationId: auth.organization.id,
+          actorProfileId: auth.profile.id,
+          action: "inventory.status_changed",
+          entityType: "Inventory",
+          entityId: inventory.id,
+          metadata: { from: inventory.status, to: parsed.data.status },
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVENTORY_NOT_FOUND") {
+      return { status: "error", message: "This inventory record is no longer available." };
+    }
+    return databaseErrorState();
+  }
+
+  revalidatePath("/inventory");
+  revalidatePath("/reference-data");
+  return { status: "success", message: "Inventory status updated." };
 }
 
 export async function archiveReferenceRecordAction(
@@ -305,6 +359,7 @@ export async function archiveReferenceRecordAction(
   });
 
   revalidatePath("/reference-data");
+  revalidatePath("/inventory");
 
   if (result === "society_has_projects") {
     redirect("/reference-data?error=society-has-projects");
