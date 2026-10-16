@@ -59,6 +59,7 @@ export const saleSchema = z.object({
 
 export const saleFiltersSchema = z.object({
   query: z.string().trim().max(120).optional().catch(undefined),
+  view: z.enum(["list", "board"]).catch("list"),
   staffProfileId: z.uuid().optional().catch(undefined),
   paymentType: z.enum(paymentTypes).optional().catch(undefined),
   minProfit: optionalMoney.catch(undefined),

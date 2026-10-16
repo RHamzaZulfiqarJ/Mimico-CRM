@@ -1,4 +1,4 @@
-import { Filter, Search, TrendingUp, WalletCards } from "lucide-react";
+import { Filter, LayoutGrid, List, Search, TrendingUp, WalletCards } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,6 +7,7 @@ import {
   SaleCreateDialog,
   SaleRowActions,
 } from "@/components/sales/sale-forms";
+import { SaleKanban } from "@/components/sales/sale-kanban";
 import { getSalesWorkspace } from "@/features/sales/queries";
 import {
   paymentTypeLabels,
@@ -62,6 +63,7 @@ export default async function SalesPage({
   const raw = await searchParams;
   const data = await getSalesWorkspace({
     query: first(raw.query),
+    view: first(raw.view),
     staffProfileId: first(raw.staffProfileId),
     paymentType: first(raw.paymentType),
     minProfit: first(raw.minProfit),
@@ -89,6 +91,57 @@ export default async function SalesPage({
     data.filters.from,
     data.filters.to,
   ].filter(Boolean).length;
+  const salesHref = (view: "list" | "board") => {
+    const query: Record<string, string> = {};
+    if (view === "board") query.view = "board";
+    if (data.filters.query) query.query = data.filters.query;
+    if (data.filters.staffProfileId) query.staffProfileId = data.filters.staffProfileId;
+    if (data.filters.paymentType) query.paymentType = data.filters.paymentType;
+    if (data.filters.minProfit) query.minProfit = data.filters.minProfit;
+    if (data.filters.maxProfit) query.maxProfit = data.filters.maxProfit;
+    if (data.filters.from) query.from = data.filters.from;
+    if (data.filters.to) query.to = data.filters.to;
+    return { pathname: "/sales" as const, query };
+  };
+  const clearFilterHref = {
+    pathname: "/sales" as const,
+    query: {
+      ...(data.filters.view === "board" ? { view: "board" } : {}),
+      ...(data.filters.query ? { query: data.filters.query } : {}),
+    },
+  };
+  const boardSales = data.sales.map((sale) => {
+    const formPaymentType = paymentTypes.includes(sale.paymentType as (typeof paymentTypes)[number])
+      ? sale.paymentType as (typeof paymentTypes)[number]
+      : "other" as const;
+    return {
+      id: sale.id,
+      uid: sale.uid ?? sale.id.slice(0, 8),
+      clientName: sale.clientName ?? "Unnamed client",
+      paymentType: formPaymentType,
+      staffName: sale.staffName ?? "Unassigned",
+      referenceNumber: sale.referenceNumber,
+      netPrice: money(sale.netPrice),
+      receivedAmount: money(sale.receivedAmount),
+      profit: money(sale.profit),
+      created: sale.createdAt.toLocaleDateString("en-GB"),
+      defaults: {
+        id: sale.id,
+        staffProfileId: sale.staffProfileId,
+        leadId: sale.lead?.id ?? null,
+        clientName: sale.clientName ?? "",
+        paymentType: formPaymentType,
+        referenceNumber: sale.referenceNumber ?? "",
+        netPrice: sale.netPrice?.toFixed(2) ?? "0.00",
+        receivedAmount: sale.receivedAmount?.toFixed(2) ?? "0.00",
+      },
+      canEdit: canManageSale({
+        role: data.auth.membership.role,
+        isOwner: sale.staffProfileId === data.auth.profile.id,
+      }),
+      canDelete,
+    };
+  });
 
   return (
     <div className="mx-auto w-full max-w-[1500px] font-sans">
@@ -107,6 +160,13 @@ export default async function SalesPage({
         </div>
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           <form action="/sales" className="relative w-full sm:w-56">
+            <input type="hidden" name="view" value={data.filters.view} />
+            {data.filters.staffProfileId ? <input type="hidden" name="staffProfileId" value={data.filters.staffProfileId} /> : null}
+            {data.filters.paymentType ? <input type="hidden" name="paymentType" value={data.filters.paymentType} /> : null}
+            {data.filters.minProfit ? <input type="hidden" name="minProfit" value={data.filters.minProfit} /> : null}
+            {data.filters.maxProfit ? <input type="hidden" name="maxProfit" value={data.filters.maxProfit} /> : null}
+            {data.filters.from ? <input type="hidden" name="from" value={data.filters.from} /> : null}
+            {data.filters.to ? <input type="hidden" name="to" value={data.filters.to} /> : null}
             <Search className="pointer-events-none absolute left-2 top-2.5 size-5 text-[#a6b5bd]" />
             <input
               name="query"
@@ -116,6 +176,16 @@ export default async function SalesPage({
               className="h-10 w-full rounded-md bg-[#ebf2f5] pl-9 pr-2 text-sm text-gray-700 outline-none transition focus:bg-white focus:ring-2 focus:ring-[#20aee3]/25"
             />
           </form>
+          <Link
+            href={salesHref(data.filters.view === "board" ? "list" : "board")}
+            role="button"
+            aria-pressed={data.filters.view === "board"}
+            aria-label={data.filters.view === "board" ? "Switch to list view" : "Switch to Kanban view"}
+            title={data.filters.view === "board" ? "Switch to list view" : "Switch to Kanban view"}
+            className={`flex size-10 shrink-0 items-center justify-center rounded-md bg-[#ebf2f5] text-[#82949d] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#dfe6e8] hover:text-[#20aee3] hover:shadow-sm ${data.filters.view === "board" ? "bg-sky-50 text-[#20aee3] ring-1 ring-sky-200" : ""}`}
+          >
+            {data.filters.view === "board" ? <List className="size-5" /> : <LayoutGrid className="size-5" />}
+          </Link>
           <details className="relative shrink-0">
             <summary className="relative flex size-10 cursor-pointer list-none items-center justify-center rounded-md bg-[#ebf2f5] text-[#82949d] transition hover:bg-[#dfe6e8] hover:text-[#20aee3]" aria-label="Filter sales">
               <Filter className="size-5" />
@@ -131,6 +201,7 @@ export default async function SalesPage({
                 {activeFilterCount ? <span className="text-xs text-[#20aee3]">{activeFilterCount} active</span> : null}
               </div>
               <input type="hidden" name="query" value={data.filters.query ?? ""} />
+              <input type="hidden" name="view" value={data.filters.view} />
               <select name="staffProfileId" defaultValue={data.filters.staffProfileId ?? ""} className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm">
                 <option value="">All staff</option>
                 {staffOptions.map((member) => <option key={member.id} value={member.id}>{member.label}</option>)}
@@ -148,7 +219,7 @@ export default async function SalesPage({
                 <label className="text-xs text-gray-500">To<input name="to" type="date" defaultValue={data.filters.to} className="mt-1 h-10 w-full min-w-0 rounded-md border border-gray-300 px-2 text-sm" /></label>
               </div>
               <div className="flex justify-end gap-2">
-                <Link href="/sales" className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50">Clear</Link>
+                <Link href={clearFilterHref} className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50">Clear</Link>
                 <button className="rounded-md bg-[#20aee3] px-3 py-2 text-sm text-white transition hover:bg-[#179bd0]">Apply</button>
               </div>
             </form>
@@ -173,6 +244,7 @@ export default async function SalesPage({
       </section>
 
       <section className="surface-card overflow-hidden rounded-lg p-3 sm:p-[15px]">
+        {data.filters.view === "board" ? <SaleKanban sales={boardSales} staff={staffOptions} leads={leadOptions} canChooseStaff={canChooseStaff} /> : <>
         <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[1050px] border-collapse text-left text-sm font-light text-gray-700">
             <thead>
@@ -265,6 +337,7 @@ export default async function SalesPage({
             );
           })}
         </div>
+        </>}
         <div className="flex justify-between border-t border-gray-100 px-1 pt-4 text-xs text-gray-500 sm:justify-end"><span className="sm:hidden">Results</span><span>{data.sales.length ? `1–${data.sales.length}` : "0"} of {data.total}</span></div>
       </section>
     </div>

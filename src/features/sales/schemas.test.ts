@@ -42,6 +42,12 @@ describe("sale schemas", () => {
         paymentType: "crypto",
         staffProfileId: "not-a-uuid",
       }),
-    ).toEqual({ paymentType: undefined, staffProfileId: undefined });
+    ).toEqual({ view: "list", paymentType: undefined, staffProfileId: undefined });
+  });
+
+  it("defaults sales to list mode and accepts the board view", () => {
+    expect(saleFiltersSchema.parse({}).view).toBe("list");
+    expect(saleFiltersSchema.parse({ view: "board" }).view).toBe("board");
+    expect(saleFiltersSchema.parse({ view: "unsupported" }).view).toBe("list");
   });
 });

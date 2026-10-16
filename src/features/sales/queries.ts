@@ -11,6 +11,7 @@ function nextUtcDay(date: string) {
 
 export async function getSalesWorkspace(rawFilters: {
   query?: string;
+  view?: string;
   staffProfileId?: string;
   paymentType?: string;
   minProfit?: string;
